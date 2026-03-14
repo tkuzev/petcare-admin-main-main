@@ -23,7 +23,7 @@ export class LoginPage {
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
-  protected login(): void {
+  protected async login(): Promise<void> {
     if (this.form.invalid || this.isSubmitting()) {
       this.form.markAllAsTouched();
       return;
@@ -32,15 +32,17 @@ export class LoginPage {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    this.authService.login(this.form.value.email?.toString() ?? '', this.form.value.password?.toString() ?? '').subscribe({
-      next: () => {
-        this.router.navigateByUrl('/');
-      },
-      error: () => {
-        this.errorMessage.set('Невалиден имейл или парола.');
-        this.isSubmitting.set(false);
-      },
-    });
+    try {
+      await this.authService.login(
+        this.form.controls.email.getRawValue(),
+        this.form.controls.password.getRawValue(),
+      );
+
+      await this.router.navigateByUrl('/dashboard');
+    } catch {
+      this.errorMessage.set('Невалиден имейл или парола.');
+      this.isSubmitting.set(false);
+    }
   }
 
   protected hasError(controlName: 'email' | 'password'): boolean {

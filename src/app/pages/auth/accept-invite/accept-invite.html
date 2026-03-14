@@ -1,123 +1,74 @@
 <div class="auth-shell">
-  <section class="auth-brand-panel" aria-label="PetCare onboarding">
-    <div class="brand-badge">PetCare Admin</div>
-
-    <h1>Създай акаунт и започни с по-подреден onboarding.</h1>
-
-    <p>
-      Регистрирай профил за достъп до фирмената платформа. След това можеш да
-      управляваш екип, услуги и покани към служители, без обичайния административен цирк.
-    </p>
-
-    <div class="stats-grid" aria-hidden="true">
-      <div class="stat-card">
-        <strong>Invite-based</strong>
-        <span>По-сигурно включване на нови служители</span>
-      </div>
-      <div class="stat-card">
-        <strong>Role access</strong>
-        <span>Ясни роли и права по фирма</span>
-      </div>
-      <div class="stat-card">
-        <strong>Admin ready</strong>
-        <span>Подходящо за B2B и multi-user flow</span>
-      </div>
-    </div>
-  </section>
-
-  <section class="auth-card-wrapper" aria-label="Register form">
+  <section class="auth-card-wrapper">
     <div class="auth-card">
-      <div class="auth-card-header">
-        <p class="eyebrow">Създаване на профил</p>
-        <h2>Регистрация</h2>
-        <p class="subtitle">
-          Попълни данните си, за да създадеш нов акаунт.
-        </p>
-      </div>
+      @if (isLoading()) {
+        <div class="state-box">
+          <h2>Проверка на поканата...</h2>
+          <p>Малко търпение. Системата проверява token-а.</p>
+        </div>
+      } @else if (!isValidInvite()) {
+        <div class="state-box">
+          <h2>Невалидна покана</h2>
+          <p>{{ errorMessage() }}</p>
+          <a routerLink="/login">Към вход</a>
+        </div>
+      } @else {
+        <div class="auth-card-header">
+          <h2>Създай профил</h2>
+          <p>{{ companyName() }}</p>
+          <p>{{ inviteEmail() }}</p>
+        </div>
 
-      <form [formGroup]="form" (ngSubmit)="register()" class="auth-form">
-        <div class="name-row">
+        <form [formGroup]="form" (ngSubmit)="register()" class="auth-form">
           <div class="field">
             <label for="firstName">Име</label>
-            <input
-              id="firstName"
-              type="text"
-              formControlName="firstName"
-              placeholder="Иван"
-              autocomplete="given-name"
-              [attr.aria-invalid]="hasError('firstName')"
-            />
-            <div id="firstName-error" class="field-error-slot" aria-live="polite">
-                @if (hasError('firstName')) {
-                    <span class="field-error">Въведи валидно име.</span>
-                }
+            <input id="firstName" type="text" formControlName="firstName" />
+            <div class="field-error-slot">
+              @if (hasError('firstName')) {
+                <div class="field-error">Въведи валидно име.</div>
+              }
             </div>
           </div>
 
           <div class="field">
             <label for="lastName">Фамилия</label>
-            <input
-              id="lastName"
-              type="text"
-              formControlName="lastName"
-              placeholder="Иванов"
-              autocomplete="family-name"
-              [attr.aria-invalid]="hasError('lastName')"
-            />
-            <div id="lastName-error" class="field-error-slot" aria-live="polite">
-                @if (hasError('lastName')) {
-                    <span class="field-error">Въведи валидна фамилия.</span>
-                }
+            <input id="lastName" type="text" formControlName="lastName" />
+            <div class="field-error-slot">
+              @if (hasError('lastName')) {
+                <div class="field-error">Въведи валидна фамилия.</div>
+              }
             </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label for="email">Имейл</label>
-          <input
-            id="email"
-            type="email"
-            formControlName="email"
-            placeholder="name@company.com"
-            autocomplete="email"
-            [attr.aria-invalid]="hasError('email')"
-          />
-          <div id="email-error" class="field-error-slot" aria-live="polite">
-            @if (hasError('email')) {
-                <span class="field-error">Въведи валиден имейл адрес.</span>
-            }
-           </div>
-        </div>
-
-        <div class="field">
-          <label for="password">Парола</label>
-          <input
-            id="password"
-            type="password"
-            formControlName="password"
-            placeholder="Минимум 6 символа"
-            autocomplete="new-password"
-            [attr.aria-invalid]="hasError('password')"
-          />
-          <div id="password-error" class="field-error-slot" aria-live="polite">
-            @if (hasError('password')) {
-            <div class="field-error">Паролата трябва да е поне 6 символа.</div>
-            }
+          <div class="field">
+            <label for="password">Парола</label>
+            <input id="password" type="password" formControlName="password" />
+            <div class="field-error-slot">
+              @if (hasError('password')) {
+                <div class="field-error">Паролата трябва да е поне 6 символа.</div>
+              }
+            </div>
           </div>
-        </div>
 
-        @if (errorMessage()) {
-          <div class="server-error" role="alert">{{ errorMessage() }}</div>
-        }
+          <div class="field">
+            <label for="phone">Телефон</label>
+            <input id="phone" type="text" formControlName="phone" />
+            <div class="field-error-slot"></div>
+          </div>
 
-        <button class="primary-btn" type="submit" [disabled]="isSubmitting()">
-          @if (isSubmitting()) {
-            Създаване...
-          } @else {
-            Създай профил
+          @if (errorMessage()) {
+            <div class="server-error">{{ errorMessage() }}</div>
           }
-        </button>
-      </form>
+
+          <button class="primary-btn" type="submit" [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Активиране...
+            } @else {
+              Активирай акаунт
+            }
+          </button>
+        </form>
+      }
     </div>
   </section>
 </div>

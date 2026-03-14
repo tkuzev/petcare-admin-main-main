@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
+import { Layout } from './layout/layout';
 import { authGuard } from './data/auth.guard';
 import { guestGuard } from './data/guest.guard';
-import { Layout } from './layout/layout';
 import { LoginPage } from './pages/auth/login/login';
 import { AcceptInvitePage } from './pages/auth/accept-invite/accept-invite';
 
