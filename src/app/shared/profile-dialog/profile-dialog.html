@@ -1,0 +1,80 @@
+@if (open()) {
+  <div class="dialog-backdrop" (click)="cancel()" aria-hidden="true"></div>
+
+  <section
+    class="dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="profile-dialog-title"
+  >
+    <div class="dialog__header">
+      <div>
+        <p class="dialog__eyebrow">Profile</p>
+        <h2 id="profile-dialog-title">Edit profile</h2>
+      </div>
+
+      <button type="button" class="icon-btn" (click)="cancel()" aria-label="Close dialog">
+        ✕
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="dialog__form">
+      <div class="preview-block">
+        @if (form.controls.pictureUrl.getRawValue()) {
+          <img
+            class="preview-avatar"
+            [src]="form.controls.pictureUrl.getRawValue()"
+            alt="Profile preview"
+          />
+        } @else {
+          <div class="preview-avatar preview-avatar--placeholder" aria-hidden="true">
+            {{ (form.controls.name.getRawValue() || 'U').charAt(0).toUpperCase() }}
+          </div>
+        }
+      </div>
+
+      <div class="field">
+        <label for="profile-name">Name</label>
+        <input id="profile-name" type="text" formControlName="name" />
+        <div class="field-error-slot">
+          @if (hasError('name')) {
+            <div class="field-error">Enter a valid name.</div>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="profile-email">Email</label>
+        <input id="profile-email" type="email" formControlName="email" />
+        <div class="field-error-slot">
+          @if (hasError('email')) {
+            <div class="field-error">Enter a valid email address.</div>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="profile-phone">Phone</label>
+        <input id="profile-phone" type="text" formControlName="phone" />
+        <div class="field-error-slot"></div>
+      </div>
+
+      <div class="field">
+        <label for="profile-picture">Picture URL</label>
+        <input id="profile-picture" type="text" formControlName="pictureUrl" />
+        <div class="field-error-slot"></div>
+      </div>
+
+      <div class="dialog__actions">
+        <button type="button" class="btn btn--ghost" (click)="cancel()">Cancel</button>
+        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+          @if (saving()) {
+            Saving...
+          } @else {
+            Save changes
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+}

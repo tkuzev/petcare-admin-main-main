@@ -6,6 +6,8 @@ export type AuthUser = {
   id: string;
   email: string;
   name: string;
+  phone?: string | null;
+  pictureUrl?: string | null;
   role: 'admin' | 'reception' | 'vet' | 'groomer';
 };
 
@@ -27,6 +29,13 @@ type RegisterFromInviteRequest = {
   lastName: string;
   password: string;
   phone?: string;
+};
+
+export type UpdateProfileRequest = {
+  email: string;
+  name: string;
+  phone?: string;
+  pictureUrl?: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -66,6 +75,15 @@ export class AuthService {
     localStorage.setItem('auth_user', JSON.stringify(res.user));
     this._token.set(res.accessToken);
     this._user.set(res.user);
+  }
+
+  async updateProfile(payload: UpdateProfileRequest): Promise<void> {
+    const updatedUser = await firstValueFrom(
+      this.http.patch<AuthUser>('/api/users/me', payload),
+    );
+
+    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+    this._user.set(updatedUser);
   }
 
   logout(): void {

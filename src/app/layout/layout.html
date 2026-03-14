@@ -18,7 +18,8 @@
     </nav>
 
     <div class="sidebar__footer">
-      Admin<br />sofia@petcare
+      {{ currentUser()?.name || 'Admin' }}<br />
+      {{ currentUser()?.email || 'sofia@petcare' }}
     </div>
   </aside>
 
@@ -26,10 +27,43 @@
     <div class="topbar__inner">
       <div style="font-weight:800;">{{ title() }}</div>
 
-      <div style="display:flex; gap:12px; align-items:center;">
-        <button type="button" class="btn" aria-label="Notifications">🔔</button>
-        <button type="button" class="btn" aria-label="Settings">⚙️</button>
-        <div class="avatar" aria-hidden="true"></div>
+      <div class="topbar__actions">
+        <!-- <button type="button" class="btn-icon" aria-label="Notifications">🔔</button>
+        <button type="button" class="btn-icon" aria-label="Settings">⚙️</button> -->
+
+        <div class="profile-menu" data-profile-menu-root>
+          <button
+            type="button"
+            class="profile-trigger"
+            (click)="toggleProfileMenu($event)"
+            [attr.aria-expanded]="isProfileMenuOpen()"
+            aria-haspopup="menu"
+            aria-label="Open profile menu"
+          >
+            @if (currentUser()?.pictureUrl) {
+              <img class="avatar-image" [src]="currentUser()?.pictureUrl" alt="Profile picture" />
+            } @else {
+              <div class="avatar" aria-hidden="true">{{ avatarLabel() }}</div>
+            }
+          </button>
+
+          @if (isProfileMenuOpen()) {
+            <div class="profile-dropdown" role="menu">
+              <div class="profile-dropdown__header">
+                <strong>{{ currentUser()?.name || 'User' }}</strong>
+                <span>{{ currentUser()?.email }}</span>
+              </div>
+
+              <button type="button" class="profile-dropdown__item" (click)="openProfileDialog()">
+                Edit profile
+              </button>
+
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" (click)="logout()">
+                Logout
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </div>
 
@@ -38,3 +72,11 @@
     </main>
   </div>
 </div>
+
+<app-profile-dialog
+  [open]="isProfileDialogOpen()"
+  [profile]="currentUser()"
+  [saving]="isProfileSaving()"
+  (close)="closeProfileDialog()"
+  (save)="saveProfile($event)"
+></app-profile-dialog>
