@@ -24,18 +24,18 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isAuthed = computed(() => !!this._token() && !!this._user());
 
-  async login(email: string, password: string): Promise<void> {
-    const res = await this.http
-      .post<LoginResponse>('/api/auth/login', { email, password })
-      .toPromise();
+  // async login(email: string, password: string): Promise<void> {
+  //   const res = await this.http
+  //     .post<LoginResponse>('/api/auth/login', { email, password })
+  //     .toPromise();
 
-    if (!res) return;
+  //   if (!res) return;
 
-    localStorage.setItem('access_token', res.accessToken);
-    localStorage.setItem('auth_user', JSON.stringify(res.user));
-    this._token.set(res.accessToken);
-    this._user.set(res.user);
-  }
+  //   localStorage.setItem('access_token', res.accessToken);
+  //   localStorage.setItem('auth_user', JSON.stringify(res.user));
+  //   this._token.set(res.accessToken);
+  //   this._user.set(res.user);
+  // }
 
   logout(): void {
     localStorage.removeItem('access_token');
@@ -53,4 +53,18 @@ export class AuthService {
       return null;
     }
   }
+
+  login(data: {email: string, password: string}) {
+  return this.http.post('/api/auth/login', data);
+  }
+
+  register(data: {
+    firstName: string
+    lastName: string
+    email: string
+    password: string
+  }) {
+  return this.http.post('/api/auth/register', data);
+  }
+  
 }

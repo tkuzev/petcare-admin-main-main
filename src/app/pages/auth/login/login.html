@@ -1,0 +1,87 @@
+<div class="auth-shell">
+  <section class="auth-brand-panel" aria-label="PetCare introduction">
+    <div class="brand-badge">PetCare Admin</div>
+
+    <h1>Управлявай екипа, графика и услугите си на едно място.</h1>
+
+    <p>
+      Вход за фирмени администратори и служители. По-малко хаос, по-малко
+      изгубени записвания, по-малко човешки импровизации.
+    </p>
+
+    <div class="brand-points" aria-hidden="true">
+      <div class="point-card">
+        <span class="point-title">Екип и роли</span>
+        <span class="point-text">Company admin, manager и employee достъп</span>
+      </div>
+      <div class="point-card">
+        <span class="point-title">Покани към служители</span>
+        <span class="point-text">Сигурен onboarding с invite линкове</span>
+      </div>
+      <div class="point-card">
+        <span class="point-title">Модерен dashboard</span>
+        <span class="point-text">Ясни действия, по-малко support драма</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="auth-card-wrapper" aria-label="Login form">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <p class="eyebrow">Добре дошъл отново</p>
+        <h2>Вход в профила</h2>
+        <p class="subtitle">
+          Влез с фирмения си акаунт, за да продължиш.
+        </p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="login()" class="auth-form">
+        <div class="field">
+          <label for="email">Имейл</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="name@company.com"
+            autocomplete="email"
+            [attr.aria-invalid]="hasError('email')"
+          />
+            <div id="email-error" class="field-error-slot" aria-live="polite">
+                @if (hasError('email')) {
+                    <span class="field-error">Въведи валиден имейл адрес.</span>
+                }
+            </div>
+        </div>
+
+        <div class="field">
+          <label for="password">Парола</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            [attr.aria-invalid]="hasError('password')"
+          />
+          <div id="password-error" class="field-error-slot" aria-live="polite">
+          @if (hasError('password')) {
+            <div class="field-error">Паролата трябва да е поне 6 символа.</div>
+          }
+        </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="server-error" role="alert">{{ errorMessage() }}</div>
+        }
+
+        <button class="primary-btn" type="submit" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            Влизане...
+          } @else {
+            Вход
+          }
+        </button>
+      </form>
+    </div>
+  </section>
+</div>
