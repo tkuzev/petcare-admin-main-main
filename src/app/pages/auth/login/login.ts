@@ -32,7 +32,7 @@ export class LoginPage {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    this.authService.login(this.form.getRawValue()).subscribe({
+    this.authService.login(this.form.value.email?.toString() ?? '', this.form.value.password?.toString() ?? '').subscribe({
       next: () => {
         this.router.navigateByUrl('/');
       },
