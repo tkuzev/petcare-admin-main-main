@@ -74,7 +74,7 @@ export class AcceptInvitePage {
 
   private async loadInvitation(): Promise<void> {
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
-
+    
     if (!token) {
       this.errorMessage.set('Липсва token за поканата.');
       this.isLoading.set(false);
