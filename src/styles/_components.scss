@@ -1,0 +1,36 @@
+.card {
+  background: var(--surface);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 1px solid rgba(226,232,240,.9);
+  background: #fff;
+  cursor: pointer;
+}
+.btn:hover { background: var(--ink-100); }
+
+.btn--primary {
+  background: var(--brand-500);
+  border-color: transparent;
+  color: #fff;
+}
+.btn--primary:hover { background: var(--brand-600); }
+
+.input {
+  width: 288px;
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,.9);
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+}
+.input:focus { box-shadow: 0 0 0 4px var(--brand-100); }

@@ -1,0 +1,89 @@
+<div class="appointments">
+
+  <div class="appointments__header">
+    <div>
+      <div class="muted">Manage bookings</div>
+      <div class="section-title">Appointments</div>
+    </div>
+
+    <div class="appointments__headerActions">
+      <button type="button" class="btn btn--primary" (click)="openAdd()">Add appointment</button>
+    </div>
+  </div>
+
+  <div class="appointments__tabs" role="tablist" aria-label="Appointment status tabs">
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'PENDING'" (click)="setTab('PENDING')" role="tab" [attr.aria-selected]="activeTab() === 'PENDING'">
+      Pending <span class="tab__count">{{ counts().PENDING }}</span>
+    </button>
+
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'CONFIRMED'" (click)="setTab('CONFIRMED')" role="tab" [attr.aria-selected]="activeTab() === 'CONFIRMED'">
+      Confirmed <span class="tab__count">{{ counts().CONFIRMED }}</span>
+    </button>
+
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'COMPLETED'" (click)="setTab('COMPLETED')" role="tab" [attr.aria-selected]="activeTab() === 'COMPLETED'">
+      Completed <span class="tab__count">{{ counts().COMPLETED }}</span>
+    </button>
+
+    <button type="button" class="tab" [class.tab--active]="activeTab() === 'CANCELLED'" (click)="setTab('CANCELLED')" role="tab" [attr.aria-selected]="activeTab() === 'CANCELLED'">
+      Cancelled <span class="tab__count">{{ counts().CANCELLED }}</span>
+    </button>
+  </div>
+
+  <section class="card appointments__card">
+    <div class="card__header appointments__tableHeader">
+      <div class="section-title">{{ activeTab() }}</div>
+      <div class="muted">{{ vms().length }} items</div>
+    </div>
+
+    <div class="card__divider"></div>
+
+    <div class="appointments__body">
+      @if (vms().length === 0) {
+      <div class="empty">
+        <div class="empty__title">Nothing here</div>
+        <div class="muted">No appointments for this status.</div>
+      </div>
+      } @else {
+      <div class="appointments__list">
+        @for (vm of vms(); track vm.id) {
+      <div class="appointments__item">
+        <div class="appointments__itemLeft">
+          <span class="avatar" aria-hidden="true"></span>
+
+          <div class="appointments__itemText">
+            <div class="appointments__itemTitle">{{ vm.title }}</div>
+            <div class="muted">{{ vm.meta }}</div>
+          </div>
+        </div>
+
+        <div class="appointments__itemRight">
+          <span [class]="vm.badgeClass">{{ vm.statusText }}</span>
+
+          <div class="appointments__actions">
+            @for (ac of vm.actions; track ac.id) {
+            <button
+              type="button"
+              class="btn"
+              [class.btn--primary]="!!ac.primary"
+              (click)="onAction(ac.id, vm)"
+            >
+            {{ ac.label }}
+            </button>
+            }
+          </div>
+        </div>
+      </div>
+      }
+      </div>
+      }
+    </div>
+  </section>
+
+  <pc-approval-dialog
+    [request]="selectedRequest()"
+    [isOpen]="dialogOpen()"
+    (closed)="closeDialog()"
+    (approve)="approve($event)"
+    (decline)="decline($event)"
+  />
+</div>

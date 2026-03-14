@@ -1,0 +1,112 @@
+<div class="grid gap-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Dashboard</h1>
+
+    <button type="button" class="btn btn--primary" (click)="openAdd()">
+      Add Appointment
+    </button>
+  </div>
+
+  <div class="rounded-2xl bg-white shadow-card p-4 flex items-center gap-3">
+    <label for="pc-staff" class="text-sm text-ink-600">Schedule for</label>
+    <select
+      id="pc-staff"
+      class="input"
+      [value]="activeStaffId() ?? ''"
+      (change)="onStaffSelect($event)"
+      aria-label="Select team member schedule"
+    >
+      <option *ngFor="let m of staff(); trackBy: trackById" [value]="m.id">{{ m.name }}</option>
+    </select>
+  </div>
+
+  <app-calendar [staffId]="activeStaffId()"></app-calendar>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Pending requests -->
+    <section class="rounded-2xl bg-white shadow-card overflow-hidden">
+      <div class="px-6 py-5 flex items-center justify-between">
+        <div>
+          <div class="text-sm text-ink-500">Appointment requests</div>
+          <div class="font-semibold text-ink-900">Pending approval</div>
+        </div>
+        <span class="text-sm text-ink-500" aria-live="polite">{{ pending().length }} pending</span>
+      </div>
+
+      <div class="h-px bg-ink-100/70"></div>
+
+      <div class="p-4">
+        <div *ngIf="pending().length === 0" class="text-sm text-ink-500 p-4">
+          No pending requests.
+        </div>
+
+        <ul *ngIf="pending().length > 0" class="grid gap-3" aria-label="Pending appointment requests">
+          <li
+            *ngFor="let r of pending(); trackBy: trackById"
+            class="rounded-2xl border border-ink-100 p-4 flex items-center justify-between gap-4"
+          >
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-ink-900 truncate">{{ r.petType }} · {{ r.service }}</span>
+                <span [class]="statusBadgeClass(r.status)">{{ r.status }}</span>
+              </div>
+
+              <div class="text-sm text-ink-500">
+                {{ r.dayLabel }}, {{ r.timeLabel }}
+                <span *ngIf="r.ownerName"> · {{ r.ownerName }}</span>
+              </div>
+
+              <div *ngIf="r.notes" class="text-sm text-ink-500 mt-1 truncate">{{ r.notes }}</div>
+            </div>
+
+            <button type="button" class="btn btn--ghost" (click)="openReview(r)">Review</button>
+
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Recent appointments -->
+    <section class="rounded-2xl bg-white shadow-card overflow-hidden">
+      <div class="px-6 py-5">
+        <div class="text-sm text-ink-500">Recent appointments</div>
+        <div class="font-semibold text-ink-900">Latest activity</div>
+      </div>
+
+      <div class="h-px bg-ink-100/70"></div>
+
+      <div class="p-4">
+        <div *ngIf="rows().length === 0" class="text-sm text-ink-500 p-4">
+          No appointments yet.
+        </div>
+
+        <ul *ngIf="rows().length > 0" class="grid gap-3" aria-label="Recent appointments">
+          <li
+            *ngFor="let r of rows(); trackBy: trackById"
+            class="rounded-2xl border border-ink-100 p-4 flex items-center justify-between gap-4"
+          >
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-ink-900 truncate">{{ r.petName }}</span>
+                <span [class]="statusBadgeClass(r.status)">{{ r.status }}</span>
+              </div>
+
+              <div class="text-sm text-ink-500">
+                {{ r.service }} · {{ r.timeLabel }} · {{ r.ownerName }}
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <pc-approval-dialog
+    [request]="selected()"
+    [isOpen]="approvalOpen()"
+    (approve)="approve($event)"
+    (decline)="decline($event)"
+    (closed)="closeApproval()"
+  ></pc-approval-dialog>
+
+</div>

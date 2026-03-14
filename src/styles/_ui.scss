@@ -1,0 +1,122 @@
+.card {
+  background: var(--surface);
+  border-radius: var(--r-2xl);
+  box-shadow: var(--shadow-card);
+}
+
+.card--soft {
+  box-shadow: var(--shadow-soft);
+}
+
+.card__header {
+  padding: 20px 24px;
+}
+
+.card__divider {
+  height: 1px;
+  background: rgba(226, 232, 240, 0.7);
+}
+
+.card__body {
+  padding: 20px 24px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  border-radius: 12px;
+  padding: 10px 14px;
+
+  font-weight: 600;
+  font-size: 14px;
+
+  border: 1px solid rgba(226,232,240,0.9);
+  background: #fff;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.btn:hover { background: var(--ink-100); }
+.btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--brand-100); }
+
+.btn--primary {
+  background: var(--brand-500);
+  border-color: transparent;
+  color: #fff;
+}
+.btn--primary:hover { background: var(--brand-600); }
+
+.input {
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,0.9);
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+.input:focus { box-shadow: 0 0 0 4px var(--brand-100); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(226,232,240,0.9);
+  background: var(--ink-100);
+  color: var(--ink-700);
+}
+
+.badge--brand {
+  background: var(--brand-50);
+  border-color: rgba(31,111,255,0.20);
+  color: var(--brand-600);
+}
+
+.badge--ok {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.badge--info {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 14px 16px;
+  font-size: 14px;
+}
+
+.table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink-600);
+  background: var(--ink-100);
+}
+
+.table tbody tr {
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+}
+.table tbody tr:hover {
+  background: rgba(241,245,249,0.6);
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--ink-200);
+}

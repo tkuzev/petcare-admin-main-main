@@ -1,0 +1,161 @@
+<div class="pc-modal" role="dialog" aria-modal="true" aria-labelledby="pc-add-title">
+  <div class="pc-modal__header">
+    <h2 id="pc-add-title" class="pc-modal__title">Add appointment</h2>
+    <button type="button" class="pc-icon-btn" (click)="cancel()" aria-label="Close dialog">✕</button>
+  </div>
+
+  <form class="pc-modal__body" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="pc-grid">
+      <!-- Owner -->
+      <label class="pc-field">
+        <span class="pc-label">Owner name<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <input
+            id="pc-owner"
+            class="pc-input"
+            type="text"
+            formControlName="ownerName"
+            required
+            [attr.aria-invalid]="form.controls.ownerName.touched && form.controls.ownerName.invalid"
+          />
+          <span class="pc-inerror" *ngIf="form.controls.ownerName.touched && form.controls.ownerName.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Pet type -->
+      <label class="pc-field">
+        <span class="pc-label">Pet type<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <select class="pc-input" formControlName="petType" required>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </label>
+
+      <!-- Pet name -->
+      <label class="pc-field">
+        <span class="pc-label">Pet name</span>
+        <div class="pc-inputwrap">
+          <input class="pc-input" type="text" formControlName="petName" />
+        </div>
+      </label>
+
+      <!-- Service -->
+      <label class="pc-field">
+        <span class="pc-label">Service<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <input
+            class="pc-input"
+            type="text"
+            formControlName="service"
+            required
+            [attr.aria-invalid]="form.controls.service.touched && form.controls.service.invalid"
+          />
+          <span class="pc-inerror" *ngIf="form.controls.service.touched && form.controls.service.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Staff -->
+      <label class="pc-field">
+        <span class="pc-label">Team member<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <select
+            class="pc-input"
+            formControlName="staffId"
+            required
+            [attr.aria-invalid]="form.controls.staffId.touched && form.controls.staffId.invalid"
+          >
+            <option *ngFor="let m of staffSvc.staff(); trackBy: trackByStaffId" [value]="m.id">{{ m.name }}</option>
+          </select>
+          <span class="pc-inerror" *ngIf="form.controls.staffId.touched && form.controls.staffId.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Date -->
+      <label class="pc-field">
+        <span class="pc-label">Date<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <input
+            class="pc-input"
+            type="date"
+            formControlName="date"
+            required
+            [attr.aria-invalid]="form.controls.date.touched && form.controls.date.invalid"
+          />
+          <span class="pc-inerror" *ngIf="form.controls.date.touched && form.controls.date.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Start time -->
+      <label class="pc-field">
+        <span class="pc-label">Start time<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <input
+            class="pc-input"
+            type="time"
+            formControlName="startTime"
+            required
+            [attr.aria-invalid]="form.controls.startTime.touched && form.controls.startTime.invalid"
+          />
+          <span class="pc-inerror" *ngIf="form.controls.startTime.touched && form.controls.startTime.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Duration -->
+      <label class="pc-field">
+        <span class="pc-label">Duration<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <select class="pc-input" formControlName="duration" required>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">1 hour</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+      </label>
+
+      <!-- Custom end -->
+      <label class="pc-field" *ngIf="showCustomEnd()">
+        <span class="pc-label">End time<span aria-hidden="true">*</span></span>
+        <div class="pc-inputwrap">
+          <input
+            class="pc-input"
+            type="time"
+            formControlName="customEndTime"
+            required
+            [attr.aria-invalid]="form.controls.customEndTime.touched && form.controls.customEndTime.invalid"
+          />
+          <span class="pc-inerror" *ngIf="form.controls.customEndTime.touched && form.controls.customEndTime.invalid" role="alert">
+            Required
+          </span>
+        </div>
+      </label>
+
+      <!-- Notes -->
+      <label class="pc-field pc-field--full">
+        <span class="pc-label">Notes</span>
+        <div class="pc-inputwrap">
+          <textarea class="pc-input" rows="3" formControlName="notes"></textarea>
+        </div>
+      </label>
+    </div>
+
+    <div class="pc-modal__footer">
+      <button type="button" class="btn btn--ghost" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn--primary">Save</button>
+    </div>
+  </form>
+</div>

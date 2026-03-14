@@ -1,0 +1,45 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="muted">Team</div>
+      <div class="section-title">Staff</div>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Add member</button>
+  </div>
+
+  <section class="card" style="overflow:hidden;">
+    <div class="card__header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="section-title">Members</div>
+      <div class="muted">{{ activeCount() }} active</div>
+    </div>
+    <div class="card__divider"></div>
+
+    <div class="list">
+      @for (m of staff(); track m.id) {
+        <div class="row">
+          <div class="row__left">
+            <span class="avatar" aria-hidden="true"></span>
+            <div>
+              <div style="font-weight:800;">{{ m.name }}</div>
+              <div class="muted">{{ m.role }}</div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span [class]="m.active ? 'badge badge--ok' : 'badge'">{{ m.active ? 'Active' : 'Inactive' }}</span>
+            <button type="button" class="btn" (click)="openEdit(m.id)" aria-label="Edit member {{ m.name }}">Edit</button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <pc-staff-dialog
+    [isOpen]="dialogOpen()"
+    [initial]="editing()"
+    [title]="editing() ? 'Edit member' : 'Add member'"
+    (save)="save($event)"
+    (closed)="closeDialog()"
+  />
+</div>

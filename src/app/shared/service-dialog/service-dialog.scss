@@ -1,0 +1,39 @@
+@use '../approval-dialog/approval-dialog.scss' as *;
+
+.pc-form {
+  display: grid;
+  gap: 14px;
+}
+
+.pc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pc-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pc-field__label {
+  font-size: 13px;
+  color: #8892a6;
+}
+
+.pc-field__error {
+  font-size: 12px;
+  color: #ffb4b4;
+}
+
+.pc-check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .pc-grid {
+    grid-template-columns: 1fr;
+  }
+}

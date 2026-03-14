@@ -1,0 +1,55 @@
+<dialog #dlg class="pc-dialog" aria-labelledby="staff-title" aria-describedby="staff-desc">
+  <form method="dialog" class="pc-dialog__inner" (submit)="$event.preventDefault(); onSubmit()">
+    <header class="pc-dialog__header">
+      <div>
+        <div class="muted">Team</div>
+        <h2 id="staff-title" class="pc-dialog__title">{{ title() }}</h2>
+      </div>
+
+      <button type="button" class="pc-icon-btn" (click)="close()">✕</button>
+    </header>
+
+    <div class="pc-dialog__divider"></div>
+
+    <section class="pc-dialog__body">
+      <p id="staff-desc" class="muted">Add or edit a team member.</p>
+
+      <div class="pc-form">
+        <label class="pc-field">
+          <span class="pc-field__label">Name</span>
+          <input
+            type="text"
+            class="input"
+            autocomplete="name"
+            [formControl]="form.controls.name"
+            [attr.aria-invalid]="submitted() && form.controls.name.invalid"
+          />
+          @if (submitted() && form.controls.name.invalid) {
+            <span class="pc-field__error">Name is required.</span>
+          }
+        </label>
+
+        <label class="pc-field">
+          <span class="pc-field__label">Role</span>
+          <select class="input" [formControl]="form.controls.role">
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="pc-check">
+          <input type="checkbox" [formControl]="form.controls.active" />
+          <span>Active</span>
+        </label>
+      </div>
+    </section>
+
+    <div class="pc-dialog__divider"></div>
+
+    <footer class="pc-dialog__footer">
+      <button type="button" class="btn" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary">Save</button>
+    </footer>
+  </form>
+</dialog>

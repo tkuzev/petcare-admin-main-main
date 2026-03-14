@@ -1,0 +1,43 @@
+.fc {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+}
+
+.fc .fc-button {
+  border: 1px solid rgba(226,232,240,0.9) !important;
+  background: #fff !important;
+  color: var(--ink-900) !important;
+  border-radius: 12px !important;
+  padding: 8px 10px !important;
+  box-shadow: none !important;
+}
+
+.fc .fc-button:hover { background: var(--ink-100) !important; }
+
+.fc .fc-timegrid-slot,
+.fc .fc-timegrid-axis,
+.fc .fc-col-header-cell {
+  border-color: rgba(226,232,240,0.7) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-600);
+}
+
+.pc-event-pill {
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: rgba(31,111,255,0.10) !important;
+  color: var(--brand-700) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.fc .fc-event-title { font-size: 12px; font-weight: 700; }
+.fc .fc-event-time  { font-size: 11px; opacity: 0.85; }

@@ -1,0 +1,40 @@
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <div class="sidebar__logo">PC</div>
+      <div>
+        <div style="opacity:.7; font-size:13px;">PetCare</div>
+        <div style="font-weight:800;">Admin</div>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav" aria-label="Admin navigation">
+      <a class="nav-link" routerLink="/dashboard" routerLinkActive="nav-link--active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+      <a class="nav-link" routerLink="/appointments" routerLinkActive="nav-link--active">Appointments</a>
+      <a class="nav-link" routerLink="/services" routerLinkActive="nav-link--active">Services</a>
+      <a class="nav-link" routerLink="/staff" routerLinkActive="nav-link--active">Staff</a>
+    </nav>
+
+    <div class="sidebar__footer">
+      Admin<br />sofia@petcare
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar__inner">
+      <div style="font-weight:800;">{{ title() }}</div>
+
+      <div style="display:flex; gap:12px; align-items:center;">
+        <button type="button" class="btn" aria-label="Notifications">🔔</button>
+        <button type="button" class="btn" aria-label="Settings">⚙️</button>
+        <div class="avatar" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <main id="main" class="content" tabindex="-1">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

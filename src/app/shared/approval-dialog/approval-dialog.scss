@@ -1,0 +1,75 @@
+.pc-dialog {
+  border: 0;
+  padding: 0;
+  border-radius: var(--r-2xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+
+  margin: auto; /* key: centers dialog in modal mode */
+}
+
+.pc-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.pc-dialog__inner {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.pc-dialog__header {
+  padding: 18px 20px;
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pc-dialog__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink-900);
+}
+
+.pc-dialog__divider {
+  height: 1px;
+  background: rgba(226, 232, 240, 0.7);
+}
+
+.pc-dialog__body { padding: 16px 20px; }
+.pc-dialog__footer {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pc-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(226,232,240,0.9);
+  background: #fff;
+  cursor: pointer;
+}
+.pc-icon-btn:hover { background: var(--ink-100); }
+
+.pc-kv { margin-top: 12px; display: grid; gap: 10px; }
+.pc-kv__row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-xl);
+  background: rgba(241,245,249,0.7);
+}
+.pc-kv__k { font-size: 12px; font-weight: 800; color: var(--ink-600); }
+.pc-kv__v { font-size: 14px; font-weight: 700; color: var(--ink-900); }

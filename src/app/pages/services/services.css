@@ -1,0 +1,2 @@
+.page { display: grid; gap: 16px; }
+.page__header { display:flex; justify-content:space-between; align-items:flex-end; gap: 16px; }

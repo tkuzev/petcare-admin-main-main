@@ -1,0 +1,76 @@
+<dialog #dlg class="pc-dialog" aria-labelledby="svc-title" aria-describedby="svc-desc">
+  <form method="dialog" class="pc-dialog__inner" (submit)="$event.preventDefault(); onSubmit()">
+    <header class="pc-dialog__header">
+      <div>
+        <div class="muted">Catalog</div>
+        <h2 id="svc-title" class="pc-dialog__title">{{ title() }}</h2>
+      </div>
+
+      <button type="button" class="pc-icon-btn" (click)="close()">✕</button>
+    </header>
+
+    <div class="pc-dialog__divider"></div>
+
+    <section class="pc-dialog__body">
+      <p id="svc-desc" class="muted">Add or edit a service.</p>
+
+      <div class="pc-form">
+        <label class="pc-field">
+          <span class="pc-field__label">Name</span>
+          <input
+            type="text"
+            class="input"
+            autocomplete="off"
+            [formControl]="form.controls.name"
+            [attr.aria-invalid]="submitted() && form.controls.name.invalid"
+          />
+          @if (submitted() && form.controls.name.invalid) {
+            <span class="pc-field__error">Name is required.</span>
+          }
+        </label>
+
+        <div class="pc-grid">
+          <label class="pc-field">
+            <span class="pc-field__label">Duration (min)</span>
+            <input
+              type="number"
+              class="input"
+              inputmode="numeric"
+              [formControl]="form.controls.durationMin"
+              [attr.aria-invalid]="submitted() && form.controls.durationMin.invalid"
+            />
+            @if (submitted() && form.controls.durationMin.invalid) {
+              <span class="pc-field__error">Enter a valid duration.</span>
+            }
+          </label>
+
+          <label class="pc-field">
+            <span class="pc-field__label">Price (BGN)</span>
+            <input
+              type="number"
+              class="input"
+              inputmode="decimal"
+              [formControl]="form.controls.priceBgn"
+              [attr.aria-invalid]="submitted() && form.controls.priceBgn.invalid"
+            />
+            @if (submitted() && form.controls.priceBgn.invalid) {
+              <span class="pc-field__error">Enter a valid price.</span>
+            }
+          </label>
+        </div>
+
+        <label class="pc-check">
+          <input type="checkbox" [formControl]="form.controls.active" />
+          <span>Active</span>
+        </label>
+      </div>
+    </section>
+
+    <div class="pc-dialog__divider"></div>
+
+    <footer class="pc-dialog__footer">
+      <button type="button" class="btn" (click)="close()">Cancel</button>
+      <button type="submit" class="btn btn--primary">Save</button>
+    </footer>
+  </form>
+</dialog>

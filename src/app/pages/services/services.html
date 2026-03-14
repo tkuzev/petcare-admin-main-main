@@ -1,0 +1,55 @@
+<div class="page">
+  <div class="page__header">
+    <div>
+      <div class="muted">Catalog</div>
+      <div class="section-title">Services</div>
+    </div>
+
+    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Add service</button>
+  </div>
+
+  <section class="card" style="overflow:hidden;">
+    <div class="card__header" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="section-title">All services</div>
+      <div class="muted">{{ services().length }} items</div>
+    </div>
+    <div class="card__divider"></div>
+
+    <div style="overflow:auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Duration</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th style="width:1%; white-space:nowrap;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of services(); track s.id) {
+            <tr>
+              <td><strong>{{ s.name }}</strong></td>
+              <td>{{ s.durationMin }} min</td>
+              <td>{{ s.priceBgn }} лв.</td>
+              <td>
+                <span [class]="s.active ? 'badge badge--ok' : 'badge'">{{ s.active ? 'Active' : 'Inactive' }}</span>
+              </td>
+              <td>
+                <button type="button" class="btn" (click)="openEdit(s)" aria-label="Edit service {{ s.name }}">Edit</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <pc-service-dialog
+    [isOpen]="dialogOpen()"
+    [initial]="editing()"
+    [title]="editing() ? 'Edit service' : 'Add service'"
+    (save)="save($event)"
+    (closed)="closeDialog()"
+  />
+</div>
