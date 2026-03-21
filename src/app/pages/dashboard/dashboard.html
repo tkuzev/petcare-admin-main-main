@@ -7,20 +7,51 @@
     </button>
   </div>
 
-  <div class="rounded-2xl bg-white shadow-card p-4 flex items-center gap-3">
-    <label for="pc-staff" class="text-sm text-ink-600">Schedule for</label>
-    <select
-      id="pc-staff"
-      class="input"
-      [value]="activeStaffId() ?? ''"
-      (change)="onStaffSelect($event)"
-      aria-label="Select team member schedule"
-    >
-      <option *ngFor="let m of staff(); trackBy: trackById" [value]="m.id">{{ m.name }}</option>
-    </select>
+<div class="grid gap-6 lg:grid-cols-4">
+  <section class="rounded-2xl bg-white shadow-card p-5">
+    <div class="text-sm text-ink-500">Today's Appointments</div>
+    <div class="mt-2 text-3xl font-semibold text-ink-900">
+      {{ summary()?.todayAppointments ?? 0 }}
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-white shadow-card p-5">
+    <div class="text-sm text-ink-500">Upcoming Bookings</div>
+    <div class="mt-2 text-3xl font-semibold text-ink-900">
+      {{ summary()?.upcomingBookings ?? 0 }}
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-white shadow-card p-5">
+    <div class="text-sm text-ink-500">New Clients</div>
+    <div class="mt-2 text-3xl font-semibold text-ink-900">
+      {{ summary()?.newClients ?? 0 }}
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-white shadow-card p-5">
+    <div class="text-sm text-ink-500">Revenue This Month</div>
+    <div class="mt-2 text-3xl font-semibold text-ink-900">
+      {{ summary()?.revenueThisMonth ?? 0 }} лв.
+    </div>
+  </section>
+</div>
+
+<section class="rounded-2xl bg-white shadow-card overflow-hidden">
+  <div class="px-6 py-5">
+    <div class="text-sm text-ink-500">Appointments Overview</div>
+    <div class="font-semibold text-ink-900">Last 7 days</div>
   </div>
 
-  <app-calendar [staffId]="activeStaffId()"></app-calendar>
+  <div class="h-px bg-ink-100/70"></div>
+
+  <div class="p-4">
+    <app-appointments-chart [points]="chartPoints()"></app-appointments-chart>
+  </div>
+</section>
+
+
+  <!-- <app-calendar [staffId]="activeStaffId()"></app-calendar> -->
 
   <div class="grid lg:grid-cols-2 gap-6">
     <!-- Pending requests -->

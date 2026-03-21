@@ -1,0 +1,59 @@
+<div class="chart-card">
+  @if (!hasData()) {
+    <div class="chart-empty">Няма данни за графиката.</div>
+  } @else {
+    <svg
+      class="chart-svg"
+      [attr.viewBox]="'0 0 ' + chartWidth() + ' ' + chartHeight()"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="Appointments chart"
+    >
+      @for (line of gridLines(); track $index) {
+        <line
+          class="chart-grid"
+          x1="32"
+          [attr.y1]="line"
+          x2="608"
+          [attr.y2]="line"
+        />
+      }
+
+      @for (label of yAxisLabels(); track $index) {
+        <text
+          class="chart-y-label"
+          x="8"
+          [attr.y]="label.y + 4"
+        >
+          {{ label.value }}
+        </text>
+      }
+
+      <polyline
+        class="chart-line"
+        fill="none"
+        [attr.points]="polylinePoints()"
+      />
+
+      @for (point of svgPoints(); track point.label) {
+        <circle
+          class="chart-dot"
+          [attr.cx]="point.x"
+          [attr.cy]="point.y"
+          r="4"
+        />
+      }
+
+      @for (point of svgPoints(); track point.label) {
+        <text
+          class="chart-x-label"
+          [attr.x]="point.x"
+          y="228"
+          text-anchor="middle"
+        >
+          {{ point.label }}
+        </text>
+      }
+    </svg>
+  }
+</div>

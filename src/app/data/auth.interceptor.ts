@@ -8,11 +8,20 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();
+  const companyId = localStorage.getItem('company_id');
 
-  const authReq = token
-    ? req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` },
-      })
+  const headers: Record<string, string> = {};
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (companyId) {
+    headers['X-Company-Id'] = companyId;
+  }
+
+  const authReq = Object.keys(headers).length > 0
+    ? req.clone({ setHeaders: headers })
     : req;
 
   return next(authReq).pipe(

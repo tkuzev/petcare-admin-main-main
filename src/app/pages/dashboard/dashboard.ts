@@ -2,12 +2,13 @@ import { NgFor, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
 
-import { Calendar } from '../../shared/calendar/calendar';
 import { ApprovalDialog, AppointmentRequest } from '../../shared/approval-dialog/approval-dialog';
 import { AddAppointmentDialog } from '../../shared/add-appointment-dialog/add-appointment-dialog';
 
 import { AppointmentsService, AppointmentCreate, AppointmentStatus } from '../../data/appointments.service';
 import { StaffService } from '../../data/staff.service';
+import { DashboardChartPoint, DashboardService, DashboardSummary } from '../../data/dashboard.service';
+import { AppointmentsChartComponent } from '../../shared/appointments-chart/appointments-chart';
 
 type RecentRow = {
   id: string;
@@ -23,31 +24,53 @@ type RecentRow = {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIf, NgFor, Calendar, ApprovalDialog],
+  imports: [NgIf, NgFor, ApprovalDialog, AppointmentsChartComponent],
 })
 export class Dashboard {
   private readonly appts = inject(AppointmentsService);
   private readonly dialog = inject(Dialog);
   private readonly staffSvc = inject(StaffService);
+  private readonly dashboardSvc = inject(DashboardService);
 
   readonly staff = this.staffSvc.staff;
 
-  /** Which team member’s schedule we’re looking at. */
   readonly selectedStaffId = signal<string | null>(null);
-
-  /** Always resolves to something usable when staff exists. */
   readonly activeStaffId = computed<string | null>(() => this.selectedStaffId() ?? this.staffSvc.defaultStaffId());
 
+  readonly summary = signal<DashboardSummary | null>(null);
+  readonly chartPoints = signal<DashboardChartPoint[]>([]);
+  readonly dashboardLoading = signal(true);
+
   constructor() {
-    // Initialize selection once staff is available.
     effect(() => {
       if (this.selectedStaffId() !== null) return;
       const def = this.staffSvc.defaultStaffId();
       if (def) this.selectedStaffId.set(def);
     });
+
+    this.loadDashboardData();
   }
 
-  // ===== Pending requests (PENDING) =====
+  private loadDashboardData(): void {
+    this.dashboardLoading.set(true);
+
+    this.dashboardSvc.getSummary().subscribe({
+      next: data => this.summary.set(data),
+      error: error => console.error('Failed to load dashboard summary', error),
+    });
+
+    this.dashboardSvc.getAppointmentsChart(7).subscribe({
+      next: data => {
+        this.chartPoints.set(data);
+        this.dashboardLoading.set(false);
+      },
+      error: error => {
+        console.error('Failed to load dashboard chart', error);
+        this.dashboardLoading.set(false);
+      },
+    });
+  }
+
   readonly pending = computed<AppointmentRequest[]>(() => {
     const fmtDay = new Intl.DateTimeFormat('bg-BG', { weekday: 'long' });
     const fmtTime = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
@@ -71,7 +94,6 @@ export class Dashboard {
       }));
   });
 
-  // ===== Recent (latest 6) =====
   readonly rows = computed<RecentRow[]>(() => {
     const fmtTime = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
     const staffId = this.activeStaffId();
@@ -93,7 +115,6 @@ export class Dashboard {
       }));
   });
 
-  // ===== Approval dialog state =====
   readonly selected = signal<AppointmentRequest | null>(null);
   readonly approvalOpen = signal(false);
 
@@ -122,11 +143,10 @@ export class Dashboard {
     this.selectedStaffId.set(value || null);
   }
 
-  // ===== Add Appointment (CDK Dialog) =====
   openAdd(): void {
     const ref = this.dialog.open<AppointmentCreate | null>(AddAppointmentDialog, {
       hasBackdrop: true,
-      disableClose: false, // ESC/backdrop close
+      disableClose: false,
       panelClass: 'pc-dialog-panel',
     });
 
@@ -136,7 +156,6 @@ export class Dashboard {
     });
   }
 
-  // ===== UI helpers =====
   statusBadgeClass(status: AppointmentStatus | undefined): string {
     switch (status) {
       case 'CONFIRMED':

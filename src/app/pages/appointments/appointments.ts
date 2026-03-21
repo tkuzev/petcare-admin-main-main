@@ -1,15 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { AppointmentsService, Appointment, AppointmentStatus, AppointmentCreate } from '../../data/appointments.service';
+import { Dialog } from '@angular/cdk/dialog';
+
+import {
+  AppointmentsService,
+  Appointment,
+  AppointmentCreate,
+  AppointmentStatus,
+} from '../../data/appointments.service';
 import { StaffService } from '../../data/staff.service';
 import {
   ApprovalDialog,
   AppointmentRequest,
 } from '../../shared/approval-dialog/approval-dialog';
 import { AddAppointmentDialog } from '../../shared/add-appointment-dialog/add-appointment-dialog';
-import { Dialog } from '@angular/cdk/dialog';
 
 type Tab = AppointmentStatus;
-
 type ActionId = 'review' | 'cancel' | 'complete' | 'view';
 
 type AppointmentVm = {
@@ -33,81 +38,98 @@ export class Appointments {
   private readonly dialog = inject(Dialog);
   private readonly staff = inject(StaffService);
   private readonly svc = inject(AppointmentsService);
-  private readonly appts = inject(AppointmentsService);
+  private appointments: Appointment[] = [];
 
   readonly activeTab = signal<Tab>('PENDING');
 
-  readonly counts = computed(() => this.svc.counts());
-
   private readonly list = computed(() =>
-    this.svc.all().filter(x => x.status === this.activeTab()),
+    this.svc.all().filter(item => item.status === this.activeTab()),
   );
 
   readonly vms = computed<AppointmentVm[]>(() =>
-    this.list().map(a => this.toVm(a)),
+    this.list().map(item => this.toVm(item)),
   );
+
+  constructor() {
+    this.appointments = this.svc.loadAll();
+  }
 
   readonly dialogOpen = signal(false);
   readonly selectedRequest = signal<AppointmentRequest | null>(null);
 
   private readonly weekdayFmt = new Intl.DateTimeFormat('bg-BG', { weekday: 'long' });
-  private readonly timeFmt = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
+  private readonly timeFmt = new Intl.DateTimeFormat('bg-BG', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   setTab(tab: Tab): void {
     this.activeTab.set(tab);
   }
 
-  // ---------- View model mapping ----------
-  private toVm(a: Appointment): AppointmentVm {
-    const title = this.titleFor(a);
-    const meta = this.metaFor(a);
-    const statusText = this.statusText(a.status);
-    const badgeClass = this.badgeClass(a.status);
-    const actions = this.actionsFor(a.status);
-
+  private toVm(appointment: Appointment): AppointmentVm {
     return {
-      id: a.id,
-      title,
-      meta,
-      statusText,
-      badgeClass,
-      actions,
-      raw: a,
+      id: appointment.id,
+      title: this.titleFor(appointment),
+      meta: this.metaFor(appointment),
+      statusText: this.statusText(appointment.status),
+      badgeClass: this.badgeClass(appointment.status),
+      actions: this.actionsFor(appointment.status),
+      raw: appointment,
     };
   }
 
-  private titleFor(a: Appointment): string {
-    // Pet · (PetName) · Service
-    const parts: string[] = [a.petType];
-    if (a.petName) parts.push(a.petName);
-    parts.push(a.service);
+  private titleFor(appointment: Appointment): string {
+    const parts: string[] = [appointment.petType];
+
+    if (appointment.petName) {
+      parts.push(appointment.petName);
+    }
+
+    parts.push(appointment.service);
+
     return parts.join(' · ');
   }
 
-  private metaFor(a: Appointment): string {
-    const day = this.weekdayFmt.format(new Date(a.startIso));
-    const time = this.timeFmt.format(new Date(a.startIso));
+  private metaFor(appointment: Appointment): string {
+    const day = this.weekdayFmt.format(new Date(appointment.startIso));
+    const time = this.timeFmt.format(new Date(appointment.startIso));
+
     const parts = [`${day} · ${time}`];
-    const staffName = this.staff.nameById(a.staffId);
-    if (staffName) parts.push(staffName);
-    if (a.ownerName) parts.push(a.ownerName);
+    const staffName = this.staff.nameById(appointment.staffId);
+
+    if (staffName) {
+      parts.push(staffName);
+    }
+
+    if (appointment.ownerName) {
+      parts.push(appointment.ownerName);
+    }
+
     return parts.join(' · ');
   }
 
   private statusText(status: AppointmentStatus): string {
     switch (status) {
-      case 'PENDING': return 'Pending';
-      case 'CONFIRMED': return 'Confirmed';
-      case 'COMPLETED': return 'Completed';
-      case 'CANCELLED': return 'Cancelled';
+      case 'PENDING':
+        return 'Pending';
+      case 'CONFIRMED':
+        return 'Confirmed';
+      case 'COMPLETED':
+        return 'Completed';
+      case 'CANCELLED':
+        return 'Cancelled';
     }
   }
 
   private badgeClass(status: AppointmentStatus): string {
     switch (status) {
-      case 'CONFIRMED': return 'badge badge--ok';
-      case 'COMPLETED': return 'badge badge--info';
-      default: return 'badge';
+      case 'CONFIRMED':
+        return 'badge badge--ok';
+      case 'COMPLETED':
+        return 'badge badge--info';
+      default:
+        return 'badge';
     }
   }
 
@@ -125,37 +147,39 @@ export class Appointments {
     }
   }
 
-  // ---------- Actions ----------
   onAction(actionId: ActionId, vm: AppointmentVm): void {
-    const a = vm.raw;
+    const appointment = vm.raw;
 
     switch (actionId) {
       case 'review': {
-        const req: AppointmentRequest = {
-          id: a.id,
-          petType: a.petType,
-          service: a.service,
-          dayLabel: this.weekdayFmt.format(new Date(a.startIso)),
-          timeLabel: this.timeFmt.format(new Date(a.startIso)),
-          status: a.status,
-          ownerName: a.ownerName,
-          notes: a.notes,
-          staffName: this.staff.nameById(a.staffId),
+        const request: AppointmentRequest = {
+          id: appointment.id,
+          petType: appointment.petType,
+          service: appointment.service,
+          dayLabel: this.weekdayFmt.format(new Date(appointment.startIso)),
+          timeLabel: this.timeFmt.format(new Date(appointment.startIso)),
+          status: appointment.status,
+          ownerName: appointment.ownerName,
+          notes: appointment.notes,
+          staffName: this.staff.nameById(appointment.staffId),
         };
-        this.selectedRequest.set(req);
+
+        this.selectedRequest.set(request);
         this.dialogOpen.set(true);
         return;
       }
+
       case 'cancel':
-        this.svc.cancelConfirmed(a.id);
+        this.svc.decline(appointment.id);
+        this.activeTab.set('CANCELLED');
         return;
 
       case 'complete':
-        this.svc.markCompleted(a.id);
+        this.svc.approve(appointment.id);
+        this.activeTab.set('COMPLETED');
         return;
 
       case 'view':
-        // placeholder: по-късно ще отваря details drawer/page
         return;
     }
   }
@@ -177,16 +201,20 @@ export class Appointments {
     this.activeTab.set('CANCELLED');
   }
 
-    openAdd(): void {
-      const ref = this.dialog.open<AppointmentCreate | null>(AddAppointmentDialog, {
-        hasBackdrop: true,
-        disableClose: false, // ESC/backdrop close
-        panelClass: 'pc-dialog-panel',
-      });
-  
-      ref.closed.subscribe(result => {
-        if (!result) return;
-        this.appts.create(result);
-      });
-    }
+  openAdd(): void {
+    const ref = this.dialog.open<AppointmentCreate | null>(AddAppointmentDialog, {
+      hasBackdrop: true,
+      disableClose: false,
+      panelClass: 'pc-dialog-panel',
+    });
+
+    ref.closed.subscribe(result => {
+      if (!result) {
+        return;
+      }
+
+      this.svc.create(result);
+      this.activeTab.set(result.status);
+    });
+  }
 }

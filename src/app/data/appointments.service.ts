@@ -1,10 +1,10 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
 export type Appointment = {
   id: string;
-  /** Which team member owns this slot */
   staffId: string;
   petType: 'Dog' | 'Cat' | 'Other';
   petName?: string;
@@ -15,7 +15,6 @@ export type Appointment = {
   clinic?: string;
   notes?: string;
   status: AppointmentStatus;
-  /** UI-friendly: used to sort “Latest activity” by last change, not by the appointment time. */
   lastUpdatedIso?: string;
 };
 
@@ -23,110 +22,49 @@ export type AppointmentCreate = Omit<Appointment, 'id'>;
 
 @Injectable({ providedIn: 'root' })
 export class AppointmentsService {
-  private readonly items = signal<Appointment[]>([
-    {
-      id: 'a1',
-      staffId: 'm1',
-      petType: 'Dog',
-      petName: 'Bella',
-      ownerName: 'Ivan',
-      service: 'Checkup',
-      startIso: '2026-03-03T14:00:00.000Z',
-      endIso:   '2026-03-03T14:30:00.000Z',
-      status: 'PENDING',
-      notes: 'First visit',
-      lastUpdatedIso: '2026-03-01T12:00:00.000Z',
-    },
-    {
-      id: 'a2',
-      staffId: 'm2',
-      petType: 'Cat',
-      petName: 'Milo',
-      ownerName: 'Maria',
-      service: 'Vaccination',
-      startIso: '2026-03-04T10:30:00.000Z',
-      endIso:   '2026-03-04T10:45:00.000Z',
-      status: 'PENDING',
-      lastUpdatedIso: '2026-03-01T12:05:00.000Z',
-    },
-    {
-      id: 'a3',
-      staffId: 'm1',
-      petType: 'Dog',
-      petName: 'Luna',
-      ownerName: 'Georgi',
-      service: 'Grooming',
-      startIso: '2026-03-06T16:00:00.000Z',
-      endIso:   '2026-03-06T17:00:00.000Z',
-      status: 'CONFIRMED',
-      lastUpdatedIso: '2026-03-01T12:10:00.000Z',
-    },
-    {
-      id: 'a4',
-      staffId: 'm2',
-      petType: 'Cat',
-      petName: 'Nala',
-      ownerName: 'Stela',
-      service: 'Dental cleaning',
-      startIso: '2026-03-02T09:00:00.000Z',
-      endIso:   '2026-03-02T09:45:00.000Z',
-      status: 'COMPLETED',
-      lastUpdatedIso: '2026-03-01T12:20:00.000Z',
-    },
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly items = signal<Appointment[]>([]);
 
   readonly all = computed(() => this.items());
 
-  counts = computed(() => {
-    const list = this.items();
-    const by = (s: AppointmentStatus) => list.filter(x => x.status === s).length;
-    return {
-      PENDING: by('PENDING'),
-      CONFIRMED: by('CONFIRMED'),
-      COMPLETED: by('COMPLETED'),
-      CANCELLED: by('CANCELLED'),
-    };
-  });
+  loadAll(): Appointment[] {
+    this.http.get<Appointment[]>('/api/company/appointments').subscribe({
+      next: data => this.items.set(data),
+      error: error => console.error('Failed to load appointments', error),
+    });
+    return this.items();
+  }
+
+  create(payload: AppointmentCreate): void {
+    this.http.post<Appointment>('/api/company/appointments', payload).subscribe({
+      next: created => {
+        this.items.update(list => [created, ...list]);
+      },
+      error: error => {
+        console.error('Failed to create appointment', error);
+      },
+    });
+  }
 
   approve(id: string): void {
-    const now = new Date().toISOString();
-    this.items.update(list =>
-      list.map(x => (x.id === id ? { ...x, status: 'CONFIRMED', lastUpdatedIso: now } : x)),
-    );
+    this.http.patch<Appointment>(`/api/company/appointments/${id}/approve`, {}).subscribe({
+      next: updated => {
+        this.items.update(list => list.map(item => (item.id === id ? updated : item)));
+      },
+      error: error => {
+        console.error('Failed to approve appointment', error);
+      },
+    });
   }
 
   decline(id: string): void {
-    const now = new Date().toISOString();
-    this.items.update(list =>
-      list.map(x => (x.id === id ? { ...x, status: 'CANCELLED', lastUpdatedIso: now } : x)),
-    );
-  }
-
-  markCompleted(id: string): void {
-    const now = new Date().toISOString();
-    this.items.update(list =>
-      list.map(x => (x.id === id ? { ...x, status: 'COMPLETED', lastUpdatedIso: now } : x)),
-    );
-  }
-
-  cancelConfirmed(id: string): void {
-    const now = new Date().toISOString();
-    this.items.update(list =>
-      list.map(x => (x.id === id ? { ...x, status: 'CANCELLED', lastUpdatedIso: now } : x)),
-    );
-  }
-
-  create(payload: AppointmentCreate): string {
-    const id = this.newId();
-    const item: Appointment = { ...payload, id, lastUpdatedIso: new Date().toISOString() };
-
-    this.items.update(list => [item, ...list]);
-    return id;
-  }
-
-  private newId(): string {
-    // browser-safe id; crypto.randomUUID ако го има, иначе fallback
-    const uuid = globalThis.crypto?.randomUUID?.();
-    return uuid ?? `a_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
+    this.http.patch<Appointment>(`/api/company/appointments/${id}/decline`, {}).subscribe({
+      next: updated => {
+        this.items.update(list => list.map(item => (item.id === id ? updated : item)));
+      },
+      error: error => {
+        console.error('Failed to decline appointment', error);
+      },
+    });
   }
 }
