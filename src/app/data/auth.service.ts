@@ -14,7 +14,16 @@ export type AuthUser = {
 type LoginResponse = {
   accessToken: string;
   user: AuthUser;
+  company: Company;
 };
+
+type Company = {
+  companyId: string;
+  companyName: string;
+  userRole: UserRole;
+};
+
+type UserRole = 'COMPANY_ADMIN' | 'MANAGER' | 'EMPLOYEE';
 
 type InvitationValidationResponse = {
   valid: boolean;
@@ -56,6 +65,7 @@ export class AuthService {
 
     localStorage.setItem('access_token', res.accessToken);
     localStorage.setItem('auth_user', JSON.stringify(res.user));
+    localStorage.setItem('X-Company-Id', res.company.companyId); // Assuming company_id is the same as user id, adjust if needed
     this._token.set(res.accessToken);
     this._user.set(res.user);
   }

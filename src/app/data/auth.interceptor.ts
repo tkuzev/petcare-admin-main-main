@@ -8,7 +8,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();
-  const companyId = localStorage.getItem('company_id');
+  const companyId = localStorage.getItem('X-Company-Id');
 
   const headers: Record<string, string> = {};
 

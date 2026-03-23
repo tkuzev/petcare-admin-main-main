@@ -19,12 +19,12 @@ export class DashboardService {
   private readonly http = inject(HttpClient);
 
   getSummary(): Observable<DashboardSummary> {
-    return this.http.get<DashboardSummary>('/api/public/company/dashboard/summary');
+    return this.http.get<DashboardSummary>('/api/company/dashboard/summary');
   }
 
   getAppointmentsChart(days = 7): Observable<DashboardChartPoint[]> {
     return this.http.get<DashboardChartPoint[]>(
-      `/api/public/company/dashboard/appointments-chart?days=${days}`,
+      `/api/company/dashboard/appointments-chart?days=${days}`,
     );
   }
 }

@@ -67,6 +67,10 @@ export class Appointments {
     this.activeTab.set(tab);
   }
 
+  getPendingAppointmentsCount(): number {
+    return this.svc.all().filter(item => item.status === 'PENDING').length;
+  }
+
   private toVm(appointment: Appointment): AppointmentVm {
     return {
       id: appointment.id,

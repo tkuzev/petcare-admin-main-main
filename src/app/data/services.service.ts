@@ -5,7 +5,6 @@ export type ServiceItem = {
   name: string;
   /** Duration in minutes. */
   durationMin: number;
-  /** Price in BGN. */
   priceBgn: number;
   active: boolean;
 };

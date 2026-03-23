@@ -7,25 +7,25 @@
     </div>
 
     <div class="appointments__headerActions">
-      <button type="button" class="btn btn--primary" (click)="openAdd()">Add appointment</button>
+      <button type="button" class="btn btn--primary" (click)="openAdd()">Add Appointment</button>
     </div>
   </div>
 
   <div class="appointments__tabs" role="tablist" aria-label="Appointment status tabs">
     <button type="button" class="tab" [class.tab--active]="activeTab() === 'PENDING'" (click)="setTab('PENDING')" role="tab" [attr.aria-selected]="activeTab() === 'PENDING'">
-      Pending <span class="tab__count">{{ counts().PENDING }}</span>
+      Pending <span class="tab__count">{{ getPendingAppointmentsCount() }}</span>
     </button>
 
     <button type="button" class="tab" [class.tab--active]="activeTab() === 'CONFIRMED'" (click)="setTab('CONFIRMED')" role="tab" [attr.aria-selected]="activeTab() === 'CONFIRMED'">
-      Confirmed <span class="tab__count">{{ counts().CONFIRMED }}</span>
+      Confirmed
     </button>
 
     <button type="button" class="tab" [class.tab--active]="activeTab() === 'COMPLETED'" (click)="setTab('COMPLETED')" role="tab" [attr.aria-selected]="activeTab() === 'COMPLETED'">
-      Completed <span class="tab__count">{{ counts().COMPLETED }}</span>
+      Completed 
     </button>
 
     <button type="button" class="tab" [class.tab--active]="activeTab() === 'CANCELLED'" (click)="setTab('CANCELLED')" role="tab" [attr.aria-selected]="activeTab() === 'CANCELLED'">
-      Cancelled <span class="tab__count">{{ counts().CANCELLED }}</span>
+      Cancelled
     </button>
   </div>
 
