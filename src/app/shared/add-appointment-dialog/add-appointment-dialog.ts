@@ -1,12 +1,14 @@
-import { NgFor, NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { startWith } from 'rxjs';
 
 import { AppointmentCreate } from '../../data/appointments.service';
 import { StaffService } from '../../data/staff.service';
+import { ServicesService } from '../../data/services.service';
+import { AuthService } from '../../data/auth.service';
 
 type PetType = 'Dog' | 'Cat' | 'Other';
 type DurationValue = '15' | '30' | '45' | '60' | 'custom';
@@ -16,22 +18,26 @@ type DurationValue = '15' | '30' | '45' | '60' | 'custom';
   templateUrl: './add-appointment-dialog.html',
   styleUrl: './add-appointment-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, NgIf, NgFor],
+  imports: [ReactiveFormsModule, NgIf],
 })
 export class AddAppointmentDialog {
   private readonly fb = inject(FormBuilder);
   private readonly ref = inject(DialogRef<AppointmentCreate | null>);
+  private readonly auth = inject(AuthService);
+
   readonly staffSvc = inject(StaffService);
+  readonly servicesSvc = inject(ServicesService);
 
   readonly form = this.fb.nonNullable.group({
-    staffId: this.fb.nonNullable.control<string>('', { validators: [Validators.required] }),
+    staffId: this.fb.nonNullable.control('', { validators: [Validators.required] }),
     petType: this.fb.nonNullable.control<PetType>('Dog', { validators: [Validators.required] }),
+    otherPetType: this.fb.nonNullable.control('', []),
     petName: this.fb.nonNullable.control('', []),
     ownerName: this.fb.nonNullable.control('', [Validators.required]),
-    service: this.fb.nonNullable.control('', [Validators.required]),
+    serviceId: this.fb.nonNullable.control('', [Validators.required]),
 
-    date: this.fb.nonNullable.control('', [Validators.required]),      // YYYY-MM-DD
-    startTime: this.fb.nonNullable.control('', [Validators.required]), // HH:mm
+    date: this.fb.nonNullable.control('', [Validators.required]),
+    startTime: this.fb.nonNullable.control('', [Validators.required]),
     duration: this.fb.nonNullable.control<DurationValue>('30', [Validators.required]),
     customEndTime: this.fb.nonNullable.control('', []),
 
@@ -43,24 +49,84 @@ export class AddAppointmentDialog {
     { initialValue: this.form.controls.duration.value },
   );
 
+  private readonly petTypeSig = toSignal(
+    this.form.controls.petType.valueChanges.pipe(startWith(this.form.controls.petType.value)),
+    { initialValue: this.form.controls.petType.value },
+  );
+
   readonly showCustomEnd = computed(() => this.durationSig() === 'custom');
+  readonly showOtherPetType = computed(() => this.petTypeSig() === 'Other');
+
+  readonly activeServices = computed(() =>
+    this.servicesSvc.services().filter(service => service.active),
+  );
+
+  readonly canChooseStaff = computed(() => {
+    const role = this.auth.companyRole();
+    return role === 'COMPANY_ADMIN' || role === 'MANAGER';
+  });
+
+  readonly availableStaff = computed(() => {
+    const all = this.staffSvc.staff().filter(member => member.active);
+
+    if (this.canChooseStaff()) {
+      return all;
+    }
+
+    const currentStaffId = this.staffSvc.currentStaffId();
+    return all.filter(member => member.id === currentStaffId);
+  });
 
   constructor() {
-    // Default staff selection (first active member)
-    const defaultStaffId = this.staffSvc.defaultStaffId();
-    if (defaultStaffId) this.form.controls.staffId.setValue(defaultStaffId);
+    this.servicesSvc.loadAll();
+    this.staffSvc.loadAll();
 
-    // Dynamic validator for custom end time
     effect(() => {
       const endCtrl = this.form.controls.customEndTime;
       if (this.showCustomEnd()) {
-        endCtrl.addValidators([Validators.required]);
+        endCtrl.setValidators([Validators.required]);
       } else {
         endCtrl.clearValidators();
         endCtrl.setValue('');
       }
       endCtrl.updateValueAndValidity({ emitEvent: false });
     });
+
+    effect(() => {
+      const otherCtrl = this.form.controls.otherPetType;
+      if (this.showOtherPetType()) {
+        otherCtrl.setValidators([Validators.required]);
+      } else {
+        otherCtrl.clearValidators();
+        otherCtrl.setValue('');
+      }
+      otherCtrl.updateValueAndValidity({ emitEvent: false });
+    });
+
+    effect(() => {
+      const list = this.availableStaff();
+      if (!list.length) return;
+
+      const current = this.form.controls.staffId.value;
+      const exists = list.some(item => item.id === current);
+
+      if (!exists) {
+        this.form.controls.staffId.setValue(list[0]!.id);
+      }
+    });
+
+    effect(() => {
+      const services = this.activeServices();
+      const selected = this.form.controls.serviceId.value;
+      if (!selected && services.length > 0) {
+        this.form.controls.serviceId.setValue(services[0]!.id);
+      }
+    });
+  }
+
+  isInvalid(name: keyof typeof this.form.controls): boolean {
+    const control = this.form.controls[name];
+    return control.touched && control.invalid;
   }
 
   cancel(): void {
@@ -74,15 +140,27 @@ export class AddAppointmentDialog {
     }
 
     const v = this.form.getRawValue();
+    const selectedService = this.activeServices().find(item => item.id === v.serviceId);
+
+    if (!selectedService) {
+      this.form.controls.serviceId.setErrors({ required: true });
+      this.form.controls.serviceId.markAsTouched();
+      return;
+    }
+
+    const resolvedPetType = v.petType === 'Other'
+      ? v.otherPetType.trim()
+      : v.petType;
+
     const startIso = `${v.date}T${v.startTime}`;
     const endIso = this.buildEndIso(v.date, v.startTime, v.duration, v.customEndTime);
 
     const payload: AppointmentCreate = {
       staffId: v.staffId,
-      petType: v.petType,
+      petType: resolvedPetType as AppointmentCreate['petType'],
       petName: v.petName.trim() || undefined,
-      ownerName: v.ownerName.trim() || undefined,
-      service: v.service.trim(),
+      ownerName: v.ownerName.trim(),
+      service: selectedService.name,
       startIso,
       endIso,
       notes: v.notes.trim() || undefined,
@@ -93,7 +171,9 @@ export class AddAppointmentDialog {
   }
 
   private buildEndIso(date: string, startTime: string, duration: DurationValue, customEndTime: string): string {
-    if (duration === 'custom') return `${date}T${customEndTime}`;
+    if (duration === 'custom') {
+      return `${date}T${customEndTime}`;
+    }
 
     const minutes = Number(duration);
     const [y, m, d] = date.split('-').map(Number);
@@ -101,14 +181,11 @@ export class AddAppointmentDialog {
     const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
     dt.setMinutes(dt.getMinutes() + minutes);
 
-    const mm2 = String(dt.getMonth() + 1).padStart(2, '0');
-    const dd2 = String(dt.getDate()).padStart(2, '0');
-    const hh2 = String(dt.getHours()).padStart(2, '0');
-    const mi2 = String(dt.getMinutes()).padStart(2, '0');
-    return `${dt.getFullYear()}-${mm2}-${dd2}T${hh2}:${mi2}`;
-  }
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    const hour = String(dt.getHours()).padStart(2, '0');
+    const minute = String(dt.getMinutes()).padStart(2, '0');
 
-  trackByStaffId(_: number, m: { id: string }): string {
-    return m.id;
+    return `${dt.getFullYear()}-${month}-${day}T${hour}:${minute}`;
   }
 }

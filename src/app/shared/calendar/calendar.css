@@ -1,0 +1,177 @@
+:host {
+  display: block;
+}
+
+.pc-calendar-card {
+  overflow: hidden;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.pc-calendar-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px 10px;
+}
+
+.pc-calendar-card__eyebrow {
+  font-size: 15px;
+  font-weight: 600;
+  color: #42526b;
+}
+
+.pc-calendar-card__body {
+  padding: 8px 18px 18px;
+}
+
+:host ::ng-deep .fc {
+  font-family: inherit;
+}
+
+:host ::ng-deep .fc .fc-toolbar.fc-header-toolbar {
+  margin-bottom: 18px;
+  padding: 0 8px;
+}
+
+:host ::ng-deep .fc .fc-toolbar-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+:host ::ng-deep .fc .fc-scrollgrid {
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+:host ::ng-deep .fc .fc-col-header-cell {
+  background: #f8fafc;
+}
+
+:host ::ng-deep .fc .fc-col-header-cell-cushion {
+  padding: 14px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: none;
+}
+
+:host ::ng-deep .fc .fc-timegrid-axis {
+  width: 72px;
+  background: #ffffff;
+}
+
+:host ::ng-deep .fc .fc-timegrid-slot-label-cushion {
+  font-size: 13px;
+  color: #64748b;
+  padding-right: 10px;
+}
+
+:host ::ng-deep .fc .fc-timegrid-slot,
+:host ::ng-deep .fc .fc-timegrid-axis,
+:host ::ng-deep .fc .fc-col-header-cell {
+  border-color: #e8edf3 !important;
+}
+
+:host ::ng-deep .fc .fc-timegrid-slot {
+  height: 54px;
+}
+
+:host ::ng-deep .fc .fc-event {
+  border: 0 !important;
+  border-radius: 10px !important;
+  padding: 6px 8px !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+}
+
+:host ::ng-deep .fc .fc-event-main {
+  padding: 2px;
+}
+
+:host ::ng-deep .fc .fc-event-time {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.95;
+}
+
+:host ::ng-deep .fc .fc-event-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+:host ::ng-deep .fc .pc-event--consultation {
+  background: #d99a5c !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .fc .pc-event--vaccination {
+  background: #2f80ed !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .fc .pc-event--grooming {
+  background: #43c59e !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .fc .pc-event--dental {
+  background: #6676c7 !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .fc .pc-event--default {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .fc .fc-day-today {
+  background: #fffdf4 !important;
+}
+
+:host ::ng-deep .fc .fc-theme-standard td,
+:host ::ng-deep .fc .fc-theme-standard th {
+  border-color: #e8edf3;
+}
+
+.pc-calendar-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pc-calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pc-calendar-nav__button,
+.pc-calendar-nav__today {
+  border: 1px solid #dbe3ee;
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 10px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pc-calendar-nav__button {
+  width: 38px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.pc-calendar-nav__button:hover,
+.pc-calendar-nav__today:hover {
+  background: #f8fafc;
+}

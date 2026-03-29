@@ -1,14 +1,29 @@
-<div class="rounded-2xl bg-white shadow-card overflow-hidden">
-      <div class="px-6 py-5 flex items-center justify-between">
-        <div>
-          <div class="text-sm text-ink-500">Appointments Overview</div>
-          <div class="font-semibold text-ink-900">This week</div>
-        </div>
-      </div>
-
-      <div class="h-px bg-ink-100/70"></div>
-
-      <div class="p-4">
-        <full-calendar [options]="options()"></full-calendar>
-      </div>
+<section class="pc-calendar-card">
+  <div class="pc-calendar-card__top">
+    <div>
+      <div class="pc-calendar-card__eyebrow">Appointments Overview</div>
     </div>
+
+    <div class="pc-calendar-card__actions">
+      <div class="pc-calendar-nav">
+        <button type="button" class="pc-calendar-nav__button" (click)="goToPreviousWeek()">
+          ‹
+        </button>
+        <button type="button" class="pc-calendar-nav__today" (click)="goToToday()">
+          Today
+        </button>
+        <button type="button" class="pc-calendar-nav__button" (click)="goToNextWeek()">
+          ›
+        </button>
+      </div>
+
+      <button type="button" class="btn btn--primary" (click)="requestAdd()">
+        Add Appointment
+      </button>
+    </div>
+  </div>
+
+  <div class="pc-calendar-card__body">
+    <full-calendar [options]="options()"></full-calendar>
+  </div>
+</section>

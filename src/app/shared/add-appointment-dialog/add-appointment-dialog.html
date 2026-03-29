@@ -6,25 +6,22 @@
 
   <form class="pc-modal__body" [formGroup]="form" (ngSubmit)="submit()">
     <div class="pc-grid">
-      <!-- Owner -->
       <label class="pc-field">
         <span class="pc-label">Owner name<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
           <input
-            id="pc-owner"
             class="pc-input"
             type="text"
             formControlName="ownerName"
             required
-            [attr.aria-invalid]="form.controls.ownerName.touched && form.controls.ownerName.invalid"
+            [attr.aria-invalid]="isInvalid('ownerName')"
           />
-          <span class="pc-inerror" *ngIf="form.controls.ownerName.touched && form.controls.ownerName.invalid" role="alert">
-            Required
-          </span>
         </div>
+        @if (isInvalid('ownerName')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
-      <!-- Pet type -->
       <label class="pc-field">
         <span class="pc-label">Pet type<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
@@ -36,7 +33,24 @@
         </div>
       </label>
 
-      <!-- Pet name -->
+      @if (showOtherPetType()) {
+        <label class="pc-field">
+          <span class="pc-label">What animal is it?<span aria-hidden="true">*</span></span>
+          <div class="pc-inputwrap">
+            <input
+              class="pc-input"
+              type="text"
+              formControlName="otherPetType"
+              required
+              [attr.aria-invalid]="isInvalid('otherPetType')"
+            />
+          </div>
+          @if (isInvalid('otherPetType')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
+        </label>
+      }
+
       <label class="pc-field">
         <span class="pc-label">Pet name</span>
         <div class="pc-inputwrap">
@@ -44,24 +58,26 @@
         </div>
       </label>
 
-      <!-- Service -->
       <label class="pc-field">
         <span class="pc-label">Service<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
-          <input
+          <select
             class="pc-input"
-            type="text"
-            formControlName="service"
+            formControlName="serviceId"
             required
-            [attr.aria-invalid]="form.controls.service.touched && form.controls.service.invalid"
-          />
-          <span class="pc-inerror" *ngIf="form.controls.service.touched && form.controls.service.invalid" role="alert">
-            Required
-          </span>
+            [attr.aria-invalid]="isInvalid('serviceId')"
+          >
+            <option value="" disabled>Select service</option>
+            @for (service of activeServices(); track service.id) {
+              <option [value]="service.id">{{ service.name }}</option>
+            }
+          </select>
         </div>
+        @if (isInvalid('serviceId')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
-      <!-- Staff -->
       <label class="pc-field">
         <span class="pc-label">Team member<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
@@ -69,17 +85,19 @@
             class="pc-input"
             formControlName="staffId"
             required
-            [attr.aria-invalid]="form.controls.staffId.touched && form.controls.staffId.invalid"
+            [disabled]="!canChooseStaff()"
+            [attr.aria-invalid]="isInvalid('staffId')"
           >
-            <option *ngFor="let m of staffSvc.staff(); trackBy: trackByStaffId" [value]="m.id">{{ m.name }}</option>
+            @for (m of availableStaff(); track m.id) {
+              <option [value]="m.id">{{ m.name }}</option>
+            }
           </select>
-          <span class="pc-inerror" *ngIf="form.controls.staffId.touched && form.controls.staffId.invalid" role="alert">
-            Required
-          </span>
         </div>
+        @if (isInvalid('staffId')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
-      <!-- Date -->
       <label class="pc-field">
         <span class="pc-label">Date<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
@@ -88,15 +106,14 @@
             type="date"
             formControlName="date"
             required
-            [attr.aria-invalid]="form.controls.date.touched && form.controls.date.invalid"
+            [attr.aria-invalid]="isInvalid('date')"
           />
-          <span class="pc-inerror" *ngIf="form.controls.date.touched && form.controls.date.invalid" role="alert">
-            Required
-          </span>
         </div>
+        @if (isInvalid('date')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
-      <!-- Start time -->
       <label class="pc-field">
         <span class="pc-label">Start time<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
@@ -104,16 +121,16 @@
             class="pc-input"
             type="time"
             formControlName="startTime"
+            step="300"
             required
-            [attr.aria-invalid]="form.controls.startTime.touched && form.controls.startTime.invalid"
+            [attr.aria-invalid]="isInvalid('startTime')"
           />
-          <span class="pc-inerror" *ngIf="form.controls.startTime.touched && form.controls.startTime.invalid" role="alert">
-            Required
-          </span>
         </div>
+        @if (isInvalid('startTime')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
-      <!-- Duration -->
       <label class="pc-field">
         <span class="pc-label">Duration<span aria-hidden="true">*</span></span>
         <div class="pc-inputwrap">
@@ -127,24 +144,25 @@
         </div>
       </label>
 
-      <!-- Custom end -->
-      <label class="pc-field" *ngIf="showCustomEnd()">
-        <span class="pc-label">End time<span aria-hidden="true">*</span></span>
-        <div class="pc-inputwrap">
-          <input
-            class="pc-input"
-            type="time"
-            formControlName="customEndTime"
-            required
-            [attr.aria-invalid]="form.controls.customEndTime.touched && form.controls.customEndTime.invalid"
-          />
-          <span class="pc-inerror" *ngIf="form.controls.customEndTime.touched && form.controls.customEndTime.invalid" role="alert">
-            Required
-          </span>
-        </div>
-      </label>
+      @if (showCustomEnd()) {
+        <label class="pc-field">
+          <span class="pc-label">End time<span aria-hidden="true">*</span></span>
+          <div class="pc-inputwrap">
+            <input
+              class="pc-input"
+              type="time"
+              formControlName="customEndTime"
+              step="300"
+              required
+              [attr.aria-invalid]="isInvalid('customEndTime')"
+            />
+          </div>
+          @if (isInvalid('customEndTime')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
+        </label>
+      }
 
-      <!-- Notes -->
       <label class="pc-field pc-field--full">
         <span class="pc-label">Notes</span>
         <div class="pc-inputwrap">

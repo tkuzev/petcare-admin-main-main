@@ -1,48 +1,42 @@
-import { Injectable, computed, signal } from '@angular/core';
-
-export type StaffRole = 'Vet' | 'Groomer' | 'Reception';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth.service';
 
 export type StaffMember = {
   id: string;
   name: string;
-  role: StaffRole;
+  role: string;
   active: boolean;
+  userId?: string;
 };
-
-function createId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(16).slice(2, 10)}`;
-}
 
 @Injectable({ providedIn: 'root' })
 export class StaffService {
-  private readonly _staff = signal<StaffMember[]>([
-    { id: 'm1', name: 'Dr. Petar Ivanov', role: 'Vet', active: true },
-    { id: 'm2', name: 'Maria Georgieva', role: 'Groomer', active: true },
-    { id: 'm3', name: 'Nikolay Petrov', role: 'Reception', active: false },
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
+  private readonly _staff = signal<StaffMember[]>([]);
   readonly staff = this._staff.asReadonly();
 
-  readonly activeCount = computed(() => this.staff().filter(x => x.active).length);
+  loadAll(): void {
+    this.http.get<StaffMember[]>('/api/company/staff').subscribe({
+      next: items => this._staff.set(items),
+      error: error => console.error('Failed to load staff', error),
+    });
+  }
 
-  /** Best-effort default selection: first active member, otherwise first member, otherwise null. */
   readonly defaultStaffId = computed<string | null>(() => {
-    const list = this.staff();
-    const active = list.find(x => x.active);
-    return active?.id ?? list[0]?.id ?? null;
+    const current = this.currentStaffId();
+    if (current) return current;
+
+    const active = this.staff().find(item => item.active);
+    return active?.id ?? null;
   });
 
-  nameById(id: string | null | undefined): string {
-    if (!id) return '';
-    return this.staff().find(x => x.id === id)?.name ?? '';
-  }
+  readonly currentStaffId = computed<string | null>(() => {
+    const userId = this.auth.user()?.id;
+    if (!userId) return null;
 
-  addMember(payload: Omit<StaffMember, 'id'>): void {
-    const created: StaffMember = { ...payload, id: createId('m') };
-    this._staff.update(list => [created, ...list]);
-  }
-
-  updateMember(id: string, patch: Partial<Omit<StaffMember, 'id'>>): void {
-    this._staff.update(list => list.map(m => (m.id === id ? { ...m, ...patch } : m)));
-  }
+    return this.staff().find(item => item.userId === userId)?.id ?? null;
+  });
 }

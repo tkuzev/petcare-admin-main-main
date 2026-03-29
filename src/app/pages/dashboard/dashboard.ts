@@ -5,10 +5,10 @@ import { Dialog } from '@angular/cdk/dialog';
 import { ApprovalDialog, AppointmentRequest } from '../../shared/approval-dialog/approval-dialog';
 import { AddAppointmentDialog } from '../../shared/add-appointment-dialog/add-appointment-dialog';
 
-import { AppointmentsService, AppointmentCreate, AppointmentStatus } from '../../data/appointments.service';
+import { AppointmentsService, AppointmentStatus, AppointmentCreate } from '../../data/appointments.service';
 import { StaffService } from '../../data/staff.service';
 import { DashboardChartPoint, DashboardService, DashboardSummary } from '../../data/dashboard.service';
-import { AppointmentsChartComponent } from '../../shared/appointments-chart/appointments-chart';
+import { Calendar } from '../../shared/calendar/calendar';
 
 type RecentRow = {
   id: string;
@@ -24,13 +24,13 @@ type RecentRow = {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIf, NgFor, ApprovalDialog, AppointmentsChartComponent],
+  imports: [NgIf, NgFor, ApprovalDialog, AddAppointmentDialog, Calendar],
 })
 export class Dashboard {
   private readonly appts = inject(AppointmentsService);
-  private readonly dialog = inject(Dialog);
   private readonly staffSvc = inject(StaffService);
   private readonly dashboardSvc = inject(DashboardService);
+  private readonly dialog = inject(Dialog);
 
   readonly staff = this.staffSvc.staff;
 
@@ -143,19 +143,6 @@ export class Dashboard {
     this.selectedStaffId.set(value || null);
   }
 
-  openAdd(): void {
-    const ref = this.dialog.open<AppointmentCreate | null>(AddAppointmentDialog, {
-      hasBackdrop: true,
-      disableClose: false,
-      panelClass: 'pc-dialog-panel',
-    });
-
-    ref.closed.subscribe(result => {
-      if (!result) return;
-      this.appts.create(result);
-    });
-  }
-
   statusBadgeClass(status: AppointmentStatus | undefined): string {
     switch (status) {
       case 'CONFIRMED':
@@ -173,5 +160,18 @@ export class Dashboard {
 
   trackById(_: number, item: { id: string }): string {
     return item.id;
+  }
+
+  openAdd(): void {
+    const ref = this.dialog.open<AppointmentCreate | null>(AddAppointmentDialog, {
+      hasBackdrop: true,
+      disableClose: false,
+      panelClass: 'pc-dialog-panel',
+    });
+
+    ref.closed.subscribe(result => {
+      if (!result) return;
+      this.appts.create(result);
+    });
   }
 }

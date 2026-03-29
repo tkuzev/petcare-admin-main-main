@@ -1,11 +1,4 @@
 <div class="grid gap-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Dashboard</h1>
-
-    <button type="button" class="btn btn--primary" (click)="openAdd()">
-      Add Appointment
-    </button>
-  </div>
 
 <div class="grid gap-6 lg:grid-cols-4">
   <section class="rounded-2xl bg-white shadow-card p-5">
@@ -37,18 +30,10 @@
   </section>
 </div>
 
-<section class="rounded-2xl bg-white shadow-card overflow-hidden">
-  <div class="px-6 py-5">
-    <div class="text-sm text-ink-500">Appointments Overview</div>
-    <div class="font-semibold text-ink-900">Last 7 days</div>
-  </div>
-
-  <div class="h-px bg-ink-100/70"></div>
-
-  <div class="p-4">
-    <app-appointments-chart [points]="chartPoints()"></app-appointments-chart>
-  </div>
-</section>
+<app-calendar
+  [staffId]="activeStaffId()"
+  (addRequested)="openAdd()"
+></app-calendar>
 
 
   <!-- <app-calendar [staffId]="activeStaffId()"></app-calendar> -->

@@ -1,45 +1,53 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ViewChild,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import type { CalendarOptions, EventInput } from '@fullcalendar/core';
-import { AppointmentsService, AppointmentCreate } from '../../data/appointments.service';
+import { AppointmentsService } from '../../data/appointments.service';
+
+type CalendarEventClass =
+  | 'pc-event--consultation'
+  | 'pc-event--vaccination'
+  | 'pc-event--grooming'
+  | 'pc-event--dental'
+  | 'pc-event--default';
 
 @Component({
   selector: 'app-calendar',
   templateUrl: './calendar.html',
+  styleUrl: './calendar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FullCalendarModule],
 })
-export class Calendar {
+export class Calendar implements AfterViewInit {
   private readonly appts = inject(AppointmentsService);
 
-  private readonly calendarCmp = viewChild(FullCalendarComponent);
+  @ViewChild(FullCalendarComponent)
+  private calendarComponent?: FullCalendarComponent;
 
-  /** Filter the calendar to a single team member. If null, shows all confirmed appointments. */
   staffId = input<string | null>(null);
+  addRequested = output<void>();
 
-  addOpen = signal(false);
+  private eventClassFor(service: string): CalendarEventClass {
+    const normalized = service.trim().toLowerCase();
 
-  private readonly events = computed<EventInput[]>(() => {
-    const staffId = this.staffId();
-    const confirmed = this.appts
-      .all()
-      .filter(a => a.status === 'CONFIRMED')
-      .filter(a => (staffId ? a.staffId === staffId : true));
-    return confirmed.map(a => ({
-      id: a.id,
-      title: a.petName ? `${a.petType} · ${a.petName} · ${a.service}` : `${a.petType} · ${a.service}`,
-      start: a.startIso,
-      end: a.endIso,
-    }));
-  });
+    if (normalized.includes('consult')) return 'pc-event--consultation';
+    if (normalized.includes('vaccin')) return 'pc-event--vaccination';
+    if (normalized.includes('groom')) return 'pc-event--grooming';
+    if (normalized.includes('dental')) return 'pc-event--dental';
 
-  /**
-   * FullCalendar opens on the *current* week.
-   * If the next confirmed appointment is in a different week (very common), it looks like “nothing is shown”.
-   * We auto-focus the calendar to the next upcoming confirmed appointment (per staff filter).
-   */
+    return 'pc-event--default';
+  }
+
   private readonly focusDateIso = computed<string | null>(() => {
     const staffId = this.staffId();
     const nowIso = new Date().toISOString();
@@ -55,42 +63,67 @@ export class Calendar {
     return next?.startIso ?? null;
   });
 
-  constructor() {
-    // When events change (approve/filters), jump to the relevant week/day so the user *sees* something.
-    effect(() => {
-      const iso = this.focusDateIso();
-      const cmp = this.calendarCmp();
-      if (!iso || !cmp) return;
-    });
-  }
+  private readonly events = computed<EventInput[]>(() => {
+    const staffId = this.staffId();
+
+    return this.appts
+      .all()
+      .filter(a => a.status === 'CONFIRMED')
+      .filter(a => (staffId ? a.staffId === staffId : true))
+      .map(a => ({
+        id: a.id,
+        title: a.petName ? `${a.petName} - ${a.service}` : a.service,
+        start: a.startIso,
+        end: a.endIso,
+        classNames: [this.eventClassFor(a.service)],
+      }));
+  });
 
   readonly options = computed<CalendarOptions>(() => ({
     plugins: [timeGridPlugin, interactionPlugin],
     initialView: 'timeGridWeek',
     initialDate: this.focusDateIso() ?? undefined,
     timeZone: 'local',
-    height: 'auto',
-    nowIndicator: true,
+    locale: 'en-gb',
     firstDay: 1,
     allDaySlot: false,
-    slotMinTime: '08:00:00',
-    slotMaxTime: '20:00:00',
-    headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-    events: this.events() as unknown as CalendarOptions['events'],
+    nowIndicator: false,
+    expandRows: true,
+    contentHeight: 720,
+    slotMinTime: '09:00:00',
+    slotMaxTime: '19:00:00',
+    slotDuration: '01:00:00',
+    dayHeaderFormat: { weekday: 'short' },
+    headerToolbar: {
+    left: '',
+    center: 'title',
+    right: '',
+    },
+    buttonText: {
+      today: 'Today',
+    },
+    events: this.events(),
   }));
 
-  openAdd(): void {
-    this.addOpen.set(true);
+  ngAfterViewInit(): void {
+    queueMicrotask(() => {
+      this.calendarComponent?.getApi().updateSize();
+    });
   }
 
-  closeAdd(): void {
-    this.addOpen.set(false);
+  requestAdd(): void {
+    this.addRequested.emit();
   }
 
-  saveAdd(payload: AppointmentCreate): void {
-    // datetime-local връща "YYYY-MM-DDTHH:mm" (без timezone).
-    // Ако искаш всичко да е UTC в бекенда, после ще нормализираме.
-    this.appts.create(payload);
-    this.closeAdd();
+  goToPreviousWeek(): void {
+    this.calendarComponent?.getApi().prev();
+  }
+
+  goToNextWeek(): void {
+    this.calendarComponent?.getApi().next();
+  }
+
+  goToToday(): void {
+    this.calendarComponent?.getApi().today();
   }
 }

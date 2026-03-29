@@ -23,29 +23,7 @@ type Company = {
   userRole: UserRole;
 };
 
-type UserRole = 'COMPANY_ADMIN' | 'MANAGER' | 'EMPLOYEE';
-
-type InvitationValidationResponse = {
-  valid: boolean;
-  email: string;
-  companyName: string;
-  role: string;
-};
-
-type RegisterFromInviteRequest = {
-  token: string;
-  firstName: string;
-  lastName: string;
-  password: string;
-  phone?: string;
-};
-
-export type UpdateProfileRequest = {
-  email: string;
-  name: string;
-  phone?: string;
-  pictureUrl?: string;
-};
+export type UserRole = 'COMPANY_ADMIN' | 'MANAGER' | 'EMPLOYEE';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -53,9 +31,11 @@ export class AuthService {
 
   private readonly _token = signal<string | null>(localStorage.getItem('access_token'));
   private readonly _user = signal<AuthUser | null>(this.readUser());
+  private readonly _companyRole = signal<UserRole | null>(this.readCompanyRole());
 
   readonly token = this._token.asReadonly();
   readonly user = this._user.asReadonly();
+  readonly companyRole = this._companyRole.asReadonly();
   readonly isAuthed = computed(() => !!this._token() && !!this._user());
 
   async login(email: string, password: string): Promise<void> {
@@ -65,42 +45,22 @@ export class AuthService {
 
     localStorage.setItem('access_token', res.accessToken);
     localStorage.setItem('auth_user', JSON.stringify(res.user));
-    localStorage.setItem('X-Company-Id', res.company.companyId); // Assuming company_id is the same as user id, adjust if needed
+    localStorage.setItem('company_user_role', res.company.userRole);
+    localStorage.setItem('X-Company-Id', res.company.companyId);
+
     this._token.set(res.accessToken);
     this._user.set(res.user);
-  }
-
-  validateInvitation(token: string) {
-    return this.http.get<InvitationValidationResponse>(
-      `/api/public/invitations/validate?token=${encodeURIComponent(token)}`,
-    );
-  }
-
-  async registerFromInvite(payload: RegisterFromInviteRequest): Promise<void> {
-    const res = await firstValueFrom(
-      this.http.post<LoginResponse>('/api/public/auth/register-from-invite', payload),
-    );
-
-    localStorage.setItem('access_token', res.accessToken);
-    localStorage.setItem('auth_user', JSON.stringify(res.user));
-    this._token.set(res.accessToken);
-    this._user.set(res.user);
-  }
-
-  async updateProfile(payload: UpdateProfileRequest): Promise<void> {
-    const updatedUser = await firstValueFrom(
-      this.http.patch<AuthUser>('/api/users/me', payload),
-    );
-
-    localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-    this._user.set(updatedUser);
+    this._companyRole.set(res.company.userRole);
   }
 
   logout(): void {
     localStorage.removeItem('access_token');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('company_user_role');
+
     this._token.set(null);
     this._user.set(null);
+    this._companyRole.set(null);
   }
 
   private readUser(): AuthUser | null {
@@ -112,5 +72,13 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private readCompanyRole(): UserRole | null {
+    const raw = localStorage.getItem('company_user_role');
+    if (raw === 'COMPANY_ADMIN' || raw === 'MANAGER' || raw === 'EMPLOYEE') {
+      return raw;
+    }
+    return null;
   }
 }
