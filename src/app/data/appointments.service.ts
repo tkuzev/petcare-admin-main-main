@@ -22,7 +22,8 @@ export type AppointmentCreate = {
   petType: string;
   petName?: string;
   ownerEmail: string;
-  service: string;
+  serviceId: string;
+  serviceName: string;
   startIso: string;
   endIso: string;
   notes?: string;
