@@ -17,6 +17,10 @@ export class Services {
   readonly dialogOpen = signal(false);
   readonly editing = signal<ServiceItem | null>(null);
 
+  constructor() {
+    this.servicesSvc.loadAll();
+  }
+
   openAdd(): void {
     this.editing.set(null);
     this.dialogOpen.set(true);
@@ -33,11 +37,13 @@ export class Services {
 
   save(draft: ServiceDraft): void {
     const editing = this.editing();
+
     if (editing) {
       this.servicesSvc.updateService(editing.id, draft);
     } else {
       this.servicesSvc.addService(draft);
     }
+
     this.closeDialog();
   }
 }

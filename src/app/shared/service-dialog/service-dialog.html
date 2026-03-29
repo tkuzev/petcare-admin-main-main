@@ -50,10 +50,10 @@
               type="number"
               class="input"
               inputmode="decimal"
-              [formControl]="form.controls.priceBgn"
-              [attr.aria-invalid]="submitted() && form.controls.priceBgn.invalid"
+              [formControl]="form.controls.price"
+              [attr.aria-invalid]="submitted() && form.controls.price.invalid"
             />
-            @if (submitted() && form.controls.priceBgn.invalid) {
+            @if (submitted() && form.controls.price.invalid) {
               <span class="pc-field__error">Enter a valid price.</span>
             }
           </label>

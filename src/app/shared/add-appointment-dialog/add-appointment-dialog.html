@@ -12,12 +12,12 @@
           <input
             class="pc-input"
             type="text"
-            formControlName="ownerName"
+            formControlName="ownerEmail"
             required
-            [attr.aria-invalid]="isInvalid('ownerName')"
+            [attr.aria-invalid]="isInvalid('ownerEmail')"
           />
         </div>
-        @if (isInvalid('ownerName')) {
+        @if (isInvalid('ownerEmail')) {
           <span class="pc-error" role="alert">Required</span>
         }
       </label>

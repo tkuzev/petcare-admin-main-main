@@ -13,7 +13,7 @@ import { Calendar } from '../../shared/calendar/calendar';
 type RecentRow = {
   id: string;
   petName: string;
-  ownerName: string;
+  ownerEmail: string;
   service: string;
   timeLabel: string;
   status: AppointmentStatus;
@@ -43,11 +43,18 @@ export class Dashboard {
 
   constructor() {
     effect(() => {
-      if (this.selectedStaffId() !== null) return;
+      if (this.selectedStaffId() !== null) {
+        return;
+      }
+
       const def = this.staffSvc.defaultStaffId();
-      if (def) this.selectedStaffId.set(def);
+      if (def) {
+        this.selectedStaffId.set(def);
+      }
     });
 
+    this.staffSvc.loadAll();
+    this.appts.loadAll();
     this.loadDashboardData();
   }
 
@@ -88,7 +95,7 @@ export class Dashboard {
         service: a.service,
         dayLabel: fmtDay.format(new Date(a.startIso)),
         timeLabel: fmtTime.format(new Date(a.startIso)),
-        ownerName: a.ownerName,
+        ownerEmail: a.ownerEmail,
         notes: a.notes,
         status: a.status,
       }));
@@ -108,7 +115,7 @@ export class Dashboard {
       .map(a => ({
         id: a.id,
         petName: a.petName ?? a.petType,
-        ownerName: a.ownerName ?? 'Unknown',
+        ownerEmail: a.ownerEmail ?? 'Unknown',
         service: a.service,
         timeLabel: fmtTime.format(new Date(a.startIso)),
         status: a.status,
@@ -170,7 +177,10 @@ export class Dashboard {
     });
 
     ref.closed.subscribe(result => {
-      if (!result) return;
+      if (!result) {
+        return;
+      }
+
       this.appts.create(result);
     });
   }

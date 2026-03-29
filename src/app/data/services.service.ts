@@ -1,37 +1,97 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
 export type ServiceItem = {
   id: string;
   name: string;
   /** Duration in minutes. */
   durationMin: number;
-  priceBgn: number;
+  price: number;
   active: boolean;
 };
 
-function createId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(16).slice(2, 10)}`;
-}
+type ServiceApiResponse = {
+  id: number;
+  name: string;
+  durationMin: number;
+  price: number;
+  active: boolean;
+};
+
+type UpsertServiceRequest = {
+  name: string;
+  durationMin: number;
+  price: number;
+  active: boolean;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ServicesService {
-  readonly services = this._services.asReadonly();
+  private readonly http = inject(HttpClient);
+  private readonly _services = signal<ServiceItem[]>([]);
 
-  readonly activeCount = computed(() => this.services().filter(s => s.active).length);
+  readonly services = this._services.asReadonly();
+  readonly activeCount = computed(() => this.services().filter(service => service.active).length);
+
+  loadAll(): void {
+    this.http.get<ServiceApiResponse[]>('/api/company/services').subscribe({
+      next: items => {
+        this._services.set(items.map(item => this.mapFromApi(item)));
+      },
+      error: error => {
+        console.error('Failed to load services', error);
+      },
+    });
+  }
 
   addService(payload: Omit<ServiceItem, 'id'>): void {
-    const created: ServiceItem = { ...payload, id: createId('svc') };
-    this._services.update(list => [created, ...list]);
+    const request = this.toRequest(payload);
+
+    this.http.post<ServiceApiResponse>('/api/company/services', request).subscribe({
+      next: created => {
+        this._services.update(list => [this.mapFromApi(created), ...list]);
+      },
+      error: error => {
+        console.error('Failed to create service', error);
+      },
+    });
   }
 
   updateService(id: string, patch: Partial<Omit<ServiceItem, 'id'>>): void {
-    this._services.update(list => list.map(s => (s.id === id ? { ...s, ...patch } : s)));
+    const current = this._services().find(item => item.id === id);
+    if (!current) {
+      return;
+    }
+
+    const request = this.toRequest({ ...current, ...patch });
+
+    this.http.put<ServiceApiResponse>(`/api/company/services/${id}`, request).subscribe({
+      next: updated => {
+        const mapped = this.mapFromApi(updated);
+        this._services.update(list => list.map(item => (item.id === id ? mapped : item)));
+      },
+      error: error => {
+        console.error('Failed to update service', error);
+      },
+    });
   }
 
-  loadAll(): void {
-    this.http.get<ServiceItem[]>('/api/company/services').subscribe({
-      next: items => this._services.set(items),
-      error: error => console.error('Failed to load services', error),
-    });
+  private mapFromApi(item: ServiceApiResponse): ServiceItem {
+    return {
+      id: String(item.id),
+      name: item.name,
+      durationMin: item.durationMin,
+      price: item.price,
+      active: item.active,
+    };
+  }
+
+  private toRequest(payload: Omit<ServiceItem, 'id'>): UpsertServiceRequest {
+    return {
+      name: payload.name.trim(),
+      durationMin: payload.durationMin,
+      price: payload.price,
+      active: payload.active,
+    };
   }
 }

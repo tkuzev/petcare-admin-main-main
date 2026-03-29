@@ -38,7 +38,6 @@ export class Appointments {
   private readonly dialog = inject(Dialog);
   private readonly staff = inject(StaffService);
   private readonly svc = inject(AppointmentsService);
-  private appointments: Appointment[] = [];
 
   readonly activeTab = signal<Tab>('PENDING');
 
@@ -50,10 +49,6 @@ export class Appointments {
     this.list().map(item => this.toVm(item)),
   );
 
-  constructor() {
-    this.appointments = this.svc.loadAll();
-  }
-
   readonly dialogOpen = signal(false);
   readonly selectedRequest = signal<AppointmentRequest | null>(null);
 
@@ -62,6 +57,11 @@ export class Appointments {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  constructor() {
+    this.staff.loadAll();
+    this.svc.loadAll();
+  }
 
   setTab(tab: Tab): void {
     this.activeTab.set(tab);
@@ -106,8 +106,8 @@ export class Appointments {
       parts.push(staffName);
     }
 
-    if (appointment.ownerName) {
-      parts.push(appointment.ownerName);
+    if (appointment.ownerEmail) {
+      parts.push(appointment.ownerEmail);
     }
 
     return parts.join(' · ');
@@ -163,7 +163,7 @@ export class Appointments {
           dayLabel: this.weekdayFmt.format(new Date(appointment.startIso)),
           timeLabel: this.timeFmt.format(new Date(appointment.startIso)),
           status: appointment.status,
-          ownerName: appointment.ownerName,
+          ownerEmail: appointment.ownerEmail,
           notes: appointment.notes,
           staffName: this.staff.nameById(appointment.staffId),
         };
@@ -179,7 +179,7 @@ export class Appointments {
         return;
 
       case 'complete':
-        this.svc.approve(appointment.id);
+        this.svc.complete(appointment.id);
         this.activeTab.set('COMPLETED');
         return;
 

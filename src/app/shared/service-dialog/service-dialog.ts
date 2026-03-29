@@ -37,7 +37,7 @@ export class ServiceDialog {
   readonly form = this.fb.group({
     name: this.fb.control('', { validators: [Validators.required, Validators.maxLength(80)] }),
     durationMin: this.fb.control(30, { validators: [Validators.required, Validators.min(5), Validators.max(600)] }),
-    priceBgn: this.fb.control(0, { validators: [Validators.required, Validators.min(0), Validators.max(10000)] }),
+    price: this.fb.control(0, { validators: [Validators.required, Validators.min(0), Validators.max(10000)] }),
     active: this.fb.control(true),
   });
 
@@ -59,11 +59,11 @@ export class ServiceDialog {
           this.form.setValue({
             name: init.name,
             durationMin: init.durationMin,
-            priceBgn: init.priceBgn,
+            price: init.price,
             active: init.active,
           });
         } else {
-          this.form.setValue({ name: '', durationMin: 30, priceBgn: 0, active: true });
+          this.form.setValue({ name: '', durationMin: 30, price: 0, active: true });
         }
 
         if (!el.open) el.showModal();

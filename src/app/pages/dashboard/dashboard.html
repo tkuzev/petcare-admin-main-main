@@ -35,11 +35,7 @@
   (addRequested)="openAdd()"
 ></app-calendar>
 
-
-  <!-- <app-calendar [staffId]="activeStaffId()"></app-calendar> -->
-
   <div class="grid lg:grid-cols-2 gap-6">
-    <!-- Pending requests -->
     <section class="rounded-2xl bg-white shadow-card overflow-hidden">
       <div class="px-6 py-5 flex items-center justify-between">
         <div>
@@ -69,7 +65,7 @@
 
               <div class="text-sm text-ink-500">
                 {{ r.dayLabel }}, {{ r.timeLabel }}
-                <span *ngIf="r.ownerName"> · {{ r.ownerName }}</span>
+                <span *ngIf="r.ownerEmail"> · {{ r.ownerEmail }}</span>
               </div>
 
               <div *ngIf="r.notes" class="text-sm text-ink-500 mt-1 truncate">{{ r.notes }}</div>
@@ -82,7 +78,6 @@
       </div>
     </section>
 
-    <!-- Recent appointments -->
     <section class="rounded-2xl bg-white shadow-card overflow-hidden">
       <div class="px-6 py-5">
         <div class="text-sm text-ink-500">Recent appointments</div>
@@ -108,7 +103,7 @@
               </div>
 
               <div class="text-sm text-ink-500">
-                {{ r.service }} · {{ r.timeLabel }} · {{ r.ownerName }}
+                {{ r.service }} · {{ r.timeLabel }} · {{ r.ownerEmail }}
               </div>
             </div>
           </li>

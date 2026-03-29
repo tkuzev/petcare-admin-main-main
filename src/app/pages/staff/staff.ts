@@ -20,9 +20,16 @@ export class Staff {
 
   readonly editing = () => {
     const id = this.editingId();
-    if (!id) return null;
-    return this.staff().find(m => m.id === id) ?? null;
+    if (!id) {
+      return null;
+    }
+
+    return this.staff().find(member => member.id === id) ?? null;
   };
+
+  constructor() {
+    this.staffSvc.loadAll();
+  }
 
   openAdd(): void {
     this.editingId.set(null);
@@ -45,6 +52,7 @@ export class Staff {
     } else {
       this.staffSvc.addMember(draft);
     }
+
     this.closeDialog();
   }
 }

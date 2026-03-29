@@ -33,7 +33,7 @@ export class AddAppointmentDialog {
     petType: this.fb.nonNullable.control<PetType>('Dog', { validators: [Validators.required] }),
     otherPetType: this.fb.nonNullable.control('', []),
     petName: this.fb.nonNullable.control('', []),
-    ownerName: this.fb.nonNullable.control('', [Validators.required]),
+    ownerEmail: this.fb.nonNullable.control('', [Validators.required]),
     serviceId: this.fb.nonNullable.control('', [Validators.required]),
 
     date: this.fb.nonNullable.control('', [Validators.required]),
@@ -159,7 +159,7 @@ export class AddAppointmentDialog {
       staffId: v.staffId,
       petType: resolvedPetType as AppointmentCreate['petType'],
       petName: v.petName.trim() || undefined,
-      ownerName: v.ownerName.trim(),
+      ownerEmail: v.ownerEmail.trim(),
       service: selectedService.name,
       startIso,
       endIso,
