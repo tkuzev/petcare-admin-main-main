@@ -5,7 +5,9 @@
       <div class="section-title">Services</div>
     </div>
 
-    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Add service</button>
+    @if (canManageCatalog()) {
+      <button type="button" class="btn btn--primary" (click)="openAdd()">+ Add service</button>
+    }
   </div>
 
   <section class="card" style="overflow:hidden;">
@@ -36,7 +38,9 @@
                 <span [class]="s.active ? 'badge badge--ok' : 'badge'">{{ s.active ? 'Active' : 'Inactive' }}</span>
               </td>
               <td>
-                <button type="button" class="btn" (click)="openEdit(s)" aria-label="Edit service {{ s.name }}">Edit</button>
+                @if (canManageCatalog()) {
+                  <button type="button" class="btn" (click)="openEdit(s)" aria-label="Edit service {{ s.name }}">Edit</button>
+                }
               </td>
             </tr>
           }
@@ -44,6 +48,92 @@
       </table>
     </div>
   </section>
+
+  @if (canManageAssignments()) {
+    <section class="card" style="overflow:hidden;">
+      <div class="card__header" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+        <div>
+          <div class="section-title">Practitioner services</div>
+          <div class="muted">Choose which services each vet or groomer can perform and optionally override duration or price.</div>
+        </div>
+
+        <label class="pc-field" style="min-width:260px;">
+          <span class="pc-field__label">Practitioner</span>
+          <select class="input" [value]="selectedStaffId() ?? ''" (change)="selectStaff($any($event.target).value)">
+            @for (member of practitioners(); track member.id) {
+              <option [value]="member.id">{{ member.name }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <div class="card__divider"></div>
+
+      @if (assignmentsError()) {
+        <div style="padding:16px; color:#b42318;">{{ assignmentsError() }}</div>
+        <div class="card__divider"></div>
+      }
+
+      <div style="overflow:auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Enabled</th>
+              <th>Service</th>
+              <th>Default duration</th>
+              <th>Override duration</th>
+              <th>Default price</th>
+              <th>Override price</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of assignmentRows(); track row.service.id) {
+              <tr>
+                <td>
+                  <input
+                    type="checkbox"
+                    [checked]="row.assigned"
+                    (change)="toggleAssignment(row.service.id, $any($event.target).checked)"
+                  />
+                </td>
+                <td><strong>{{ row.service.name }}</strong></td>
+                <td>{{ row.service.durationMin }} min</td>
+                <td>
+                  <input
+                    type="number"
+                    class="input"
+                    style="min-width:120px;"
+                    [disabled]="!row.assigned"
+                    [value]="row.durationMin ?? ''"
+                    (input)="updateDuration(row.service.id, $any($event.target).value)"
+                    placeholder="Use default"
+                  />
+                </td>
+                <td>{{ row.service.price }} €</td>
+                <td>
+                  <input
+                    type="number"
+                    class="input"
+                    style="min-width:120px;"
+                    [disabled]="!row.assigned"
+                    [value]="row.price ?? ''"
+                    (input)="updatePrice(row.service.id, $any($event.target).value)"
+                    placeholder="Use default"
+                  />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card__divider"></div>
+      <div style="padding:16px; display:flex; justify-content:flex-end;">
+        <button type="button" class="btn btn--primary" [disabled]="assignmentsSaving()" (click)="saveAssignments()">
+          {{ assignmentsSaving() ? 'Saving...' : 'Save assignments' }}
+        </button>
+      </div>
+    </section>
+  }
 
   <pc-service-dialog
     [isOpen]="dialogOpen()"

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export type DashboardChartPoint = {
@@ -18,13 +18,26 @@ export type DashboardSummary = {
 export class DashboardService {
   private readonly http = inject(HttpClient);
 
-  getSummary(): Observable<DashboardSummary> {
-    return this.http.get<DashboardSummary>('/api/company/dashboard/summary');
+  getSummary(staffId?: string | null): Observable<DashboardSummary> {
+    return this.http.get<DashboardSummary>('/api/company/dashboard/summary', {
+      params: this.buildParams(staffId),
+    });
   }
 
-  getAppointmentsChart(days = 7): Observable<DashboardChartPoint[]> {
+  getAppointmentsChart(days = 7, staffId?: string | null): Observable<DashboardChartPoint[]> {
     return this.http.get<DashboardChartPoint[]>(
       `/api/company/dashboard/appointments-chart?days=${days}`,
+      {
+        params: this.buildParams(staffId),
+      },
     );
+  }
+
+  private buildParams(staffId?: string | null): HttpParams | undefined {
+    if (!staffId) {
+      return undefined;
+    }
+
+    return new HttpParams().set('staffId', staffId);
   }
 }

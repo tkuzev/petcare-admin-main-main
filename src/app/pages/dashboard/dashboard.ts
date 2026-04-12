@@ -4,11 +4,14 @@ import { Dialog } from '@angular/cdk/dialog';
 
 import { ApprovalDialog, AppointmentRequest } from '../../shared/approval-dialog/approval-dialog';
 import { AddAppointmentDialog } from '../../shared/add-appointment-dialog/add-appointment-dialog';
+import { CalendarBlockDialog } from '../../shared/calendar-block-dialog/calendar-block-dialog';
 
-import { AppointmentsService, AppointmentStatus, AppointmentCreate } from '../../data/appointments.service';
+import { AppointmentsService, AppointmentStatus, AppointmentCreate, Appointment } from '../../data/appointments.service';
+import { CalendarBlocksService, CalendarBlockCreate, CalendarBlock } from '../../data/calendar-blocks.service';
 import { StaffService } from '../../data/staff.service';
 import { DashboardChartPoint, DashboardService, DashboardSummary } from '../../data/dashboard.service';
 import { Calendar } from '../../shared/calendar/calendar';
+import { AuthService } from '../../data/auth.service';
 
 type RecentRow = {
   id: string;
@@ -24,49 +27,73 @@ type RecentRow = {
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIf, NgFor, ApprovalDialog, AddAppointmentDialog, Calendar],
+  imports: [NgIf, NgFor, ApprovalDialog, Calendar],
 })
 export class Dashboard {
   private readonly appts = inject(AppointmentsService);
+  private readonly calendarBlocksSvc = inject(CalendarBlocksService);
   private readonly staffSvc = inject(StaffService);
   private readonly dashboardSvc = inject(DashboardService);
   private readonly dialog = inject(Dialog);
+  private readonly auth = inject(AuthService);
 
   readonly staff = this.staffSvc.staff;
+  readonly calendarOwners = this.staffSvc.bookableStaff;
+  readonly canSwitchCalendars = computed(() => this.auth.hasCompanyRole('OWNER', 'COMPANY_ADMIN', 'MANAGER') || this.auth.hasAppRole('admin'));
+  readonly canBlockCalendars = computed(() => this.auth.hasCompanyRole('OWNER', 'COMPANY_ADMIN') || !!this.staffSvc.currentStaffId());
 
   readonly selectedStaffId = signal<string | null>(null);
-  readonly activeStaffId = computed<string | null>(() => this.selectedStaffId() ?? this.staffSvc.defaultStaffId());
+  readonly activeStaffId = computed<string | null>(() => {
+    if (this.canSwitchCalendars()) {
+      return this.selectedStaffId() ?? this.calendarOwners()[0]?.id ?? this.staffSvc.currentStaffId() ?? null;
+    }
+
+    return this.staffSvc.currentStaffId();
+  });
 
   readonly summary = signal<DashboardSummary | null>(null);
   readonly chartPoints = signal<DashboardChartPoint[]>([]);
   readonly dashboardLoading = signal(true);
+  readonly appointments = signal<Appointment[]>([]);
+  readonly blocks = signal<CalendarBlock[]>([]);
+  readonly blockFeedback = signal<string | null>(null);
 
   constructor() {
-    effect(() => {
-      if (this.selectedStaffId() !== null) {
-        return;
-      }
-
-      const def = this.staffSvc.defaultStaffId();
-      if (def) {
-        this.selectedStaffId.set(def);
-      }
-    });
-
     this.staffSvc.loadAll();
-    this.appts.loadAll();
-    this.loadDashboardData();
+
+    effect(() => {
+      const staffId = this.activeStaffId();
+      this.loadAppointmentsForStaff(staffId);
+      this.loadBlocksForStaff(staffId);
+      this.loadDashboardData(staffId);
+    });
   }
 
-  private loadDashboardData(): void {
+  private loadAppointmentsForStaff(staffId?: string | null): void {
+    this.appointments.set([]);
+    this.appts.fetchAll(staffId).subscribe({
+      next: items => this.appointments.set(items),
+      error: error => console.error('Failed to load dashboard appointments', error),
+    });
+  }
+
+  private loadBlocksForStaff(staffId?: string | null): void {
+    this.blocks.set([]);
+    this.calendarBlocksSvc.fetchAll(staffId).subscribe({
+      next: items => this.blocks.set(items),
+      error: error => console.error('Failed to load calendar blocks', error),
+    });
+  }
+
+  private loadDashboardData(staffId?: string | null): void {
     this.dashboardLoading.set(true);
 
-    this.dashboardSvc.getSummary().subscribe({
+    this.dashboardSvc.getSummary(staffId).subscribe({
       next: data => this.summary.set(data),
       error: error => console.error('Failed to load dashboard summary', error),
     });
 
-    this.dashboardSvc.getAppointmentsChart(7).subscribe({
+    this.dashboardSvc.getAppointmentsChart(7, staffId).subscribe({
       next: data => {
         this.chartPoints.set(data);
         this.dashboardLoading.set(false);
@@ -83,8 +110,7 @@ export class Dashboard {
     const fmtTime = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
     const staffId = this.activeStaffId();
 
-    return this.appts
-      .all()
+    return this.appointments()
       .filter(a => a.status === 'PENDING')
       .filter(a => (staffId ? a.staffId === staffId : true))
       .slice()
@@ -105,8 +131,7 @@ export class Dashboard {
     const fmtTime = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
     const staffId = this.activeStaffId();
 
-    return this.appts
-      .all()
+    return this.appointments()
       .slice()
       .filter(a => (staffId ? a.staffId === staffId : true))
       .filter(a => a.status !== 'PENDING')
@@ -130,6 +155,29 @@ export class Dashboard {
     this.approvalOpen.set(true);
   }
 
+  openAppointmentDetails(id: string): void {
+    const appointment = this.appointments().find(item => item.id === id);
+    if (!appointment) {
+      return;
+    }
+
+    const weekdayFmt = new Intl.DateTimeFormat('bg-BG', { weekday: 'long' });
+    const timeFmt = new Intl.DateTimeFormat('bg-BG', { hour: '2-digit', minute: '2-digit' });
+
+    this.selected.set({
+      id: appointment.id,
+      petType: appointment.petName ? `${appointment.petType} · ${appointment.petName}` : appointment.petType,
+      service: appointment.service,
+      dayLabel: weekdayFmt.format(new Date(appointment.startIso)),
+      timeLabel: timeFmt.format(new Date(appointment.startIso)),
+      ownerEmail: appointment.ownerEmail,
+      notes: appointment.notes,
+      status: appointment.status,
+      staffName: this.staffSvc.nameById(appointment.staffId),
+    });
+    this.approvalOpen.set(true);
+  }
+
   closeApproval(): void {
     this.approvalOpen.set(false);
     this.selected.set(null);
@@ -148,6 +196,12 @@ export class Dashboard {
   onStaffSelect(event: Event): void {
     const value = (event.target as HTMLSelectElement | null)?.value ?? '';
     this.selectedStaffId.set(value || null);
+  }
+
+  changeCalendarOwner(staffId: string | null): void {
+    this.selectedStaffId.set(staffId);
+    this.loadAppointmentsForStaff(staffId);
+    this.loadBlocksForStaff(staffId);
   }
 
   statusBadgeClass(status: AppointmentStatus | undefined): string {
@@ -182,6 +236,32 @@ export class Dashboard {
       }
 
       this.appts.create(result);
+      this.loadAppointmentsForStaff(this.activeStaffId());
+    });
+  }
+
+  openBlockDialog(): void {
+    const ref = this.dialog.open<CalendarBlockCreate | null>(CalendarBlockDialog, {
+      hasBackdrop: true,
+      disableClose: false,
+      panelClass: 'pc-dialog-panel',
+    });
+
+    ref.closed.subscribe(async result => {
+      if (!result) {
+        return;
+      }
+
+      try {
+        await this.calendarBlocksSvc.create(result);
+        this.blockFeedback.set('Calendar block saved.');
+        this.loadAppointmentsForStaff(this.activeStaffId());
+        this.loadBlocksForStaff(this.activeStaffId());
+        this.loadDashboardData(this.activeStaffId());
+      } catch (error) {
+        this.blockFeedback.set('Could not save the block. Please check the selected time range.');
+        console.error('Failed to create calendar block', error);
+      }
     });
   }
 }

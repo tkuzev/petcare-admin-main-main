@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
 
 import {
@@ -7,6 +7,7 @@ import {
   AppointmentCreate,
   AppointmentStatus,
 } from '../../data/appointments.service';
+import { AuthService } from '../../data/auth.service';
 import { StaffService } from '../../data/staff.service';
 import {
   ApprovalDialog,
@@ -23,7 +24,7 @@ type AppointmentVm = {
   meta: string;
   statusText: string;
   badgeClass: string;
-  actions: { id: ActionId; label: string; primary?: boolean }[];
+  actions: { id: ActionId; label: string; tone?: 'primary' | 'danger' | 'default' }[];
   raw: Appointment;
 };
 
@@ -38,8 +39,10 @@ export class Appointments {
   private readonly dialog = inject(Dialog);
   private readonly staff = inject(StaffService);
   private readonly svc = inject(AppointmentsService);
+  private readonly auth = inject(AuthService);
 
   readonly activeTab = signal<Tab>('PENDING');
+  private readonly initialReloadScheduled = signal(false);
 
   private readonly list = computed(() =>
     this.svc.all().filter(item => item.status === this.activeTab()),
@@ -52,6 +55,8 @@ export class Appointments {
   readonly dialogOpen = signal(false);
   readonly selectedRequest = signal<AppointmentRequest | null>(null);
 
+  private readonly tabs: Tab[] = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+
   private readonly weekdayFmt = new Intl.DateTimeFormat('bg-BG', { weekday: 'long' });
   private readonly timeFmt = new Intl.DateTimeFormat('bg-BG', {
     hour: '2-digit',
@@ -59,6 +64,30 @@ export class Appointments {
   });
 
   constructor() {
+    effect(() => {
+      if (!this.auth.isAuthed() || this.initialReloadScheduled()) {
+        return;
+      }
+
+      this.initialReloadScheduled.set(true);
+      queueMicrotask(() => this.svc.loadAll());
+      setTimeout(() => this.svc.loadAll(), 0);
+    });
+
+    effect(() => {
+      const all = this.svc.all();
+      const active = this.activeTab();
+
+      if (all.length === 0 || all.some(item => item.status === active)) {
+        return;
+      }
+
+      const firstAvailable = this.tabs.find(tab => all.some(item => item.status === tab));
+      if (firstAvailable) {
+        this.activeTab.set(firstAvailable);
+      }
+    });
+
     this.staff.loadAll();
     this.svc.loadAll();
   }
@@ -137,14 +166,25 @@ export class Appointments {
     }
   }
 
-  private actionsFor(status: AppointmentStatus): { id: ActionId; label: string; primary?: boolean }[] {
+  actionClass(action: { tone?: 'primary' | 'danger' | 'default' }): string {
+    switch (action.tone) {
+      case 'primary':
+        return 'btn btn--primary';
+      case 'danger':
+        return 'btn appointments__btn--danger';
+      default:
+        return 'btn';
+    }
+  }
+
+  private actionsFor(status: AppointmentStatus): { id: ActionId; label: string; tone?: 'primary' | 'danger' | 'default' }[] {
     switch (status) {
       case 'PENDING':
-        return [{ id: 'review', label: 'Review', primary: true }];
+        return [{ id: 'review', label: 'Review', tone: 'primary' }];
       case 'CONFIRMED':
         return [
-          { id: 'cancel', label: 'Cancel' },
-          { id: 'complete', label: 'Mark completed', primary: true },
+          { id: 'complete', label: 'Mark completed', tone: 'primary' },
+          { id: 'cancel', label: 'Cancel', tone: 'danger' },
         ];
       default:
         return [{ id: 'view', label: 'View' }];
@@ -166,6 +206,7 @@ export class Appointments {
           ownerEmail: appointment.ownerEmail,
           notes: appointment.notes,
           staffName: this.staff.nameById(appointment.staffId),
+          mode: 'review',
         };
 
         this.selectedRequest.set(request);
@@ -174,18 +215,59 @@ export class Appointments {
       }
 
       case 'cancel':
-        this.svc.decline(appointment.id);
-        this.activeTab.set('CANCELLED');
+        this.selectedRequest.set({
+          id: appointment.id,
+          petType: appointment.petName ? `${appointment.petType} · ${appointment.petName}` : appointment.petType,
+          service: appointment.service,
+          dayLabel: this.weekdayFmt.format(new Date(appointment.startIso)),
+          timeLabel: this.timeFmt.format(new Date(appointment.startIso)),
+          status: appointment.status,
+          ownerEmail: appointment.ownerEmail,
+          notes: appointment.notes,
+          staffName: this.staff.nameById(appointment.staffId),
+          mode: 'cancel',
+        });
+        this.dialogOpen.set(true);
         return;
 
       case 'complete':
-        this.svc.complete(appointment.id);
-        this.activeTab.set('COMPLETED');
+        this.selectedRequest.set({
+          id: appointment.id,
+          petType: appointment.petName ? `${appointment.petType} · ${appointment.petName}` : appointment.petType,
+          service: appointment.service,
+          dayLabel: this.weekdayFmt.format(new Date(appointment.startIso)),
+          timeLabel: this.timeFmt.format(new Date(appointment.startIso)),
+          status: appointment.status,
+          ownerEmail: appointment.ownerEmail,
+          notes: appointment.notes,
+          staffName: this.staff.nameById(appointment.staffId),
+          mode: 'complete',
+        });
+        this.dialogOpen.set(true);
         return;
 
       case 'view':
+        this.openDetails(appointment);
         return;
     }
+  }
+
+  private openDetails(appointment: Appointment): void {
+    const request: AppointmentRequest = {
+      id: appointment.id,
+      petType: appointment.petName ? `${appointment.petType} · ${appointment.petName}` : appointment.petType,
+      service: appointment.service,
+      dayLabel: this.weekdayFmt.format(new Date(appointment.startIso)),
+      timeLabel: this.timeFmt.format(new Date(appointment.startIso)),
+      status: appointment.status,
+      ownerEmail: appointment.ownerEmail,
+      notes: appointment.notes,
+      staffName: this.staff.nameById(appointment.staffId),
+      mode: 'view',
+    };
+
+    this.selectedRequest.set(request);
+    this.dialogOpen.set(true);
   }
 
   closeDialog(): void {
@@ -194,15 +276,18 @@ export class Appointments {
   }
 
   approve(id: string): void {
-    this.svc.approve(id);
+    const mode = this.selectedRequest()?.mode;
+    if (mode === 'complete') {
+      this.svc.complete(id);
+    } else {
+      this.svc.approve(id);
+    }
     this.closeDialog();
-    this.activeTab.set('CONFIRMED');
   }
 
   decline(id: string): void {
     this.svc.decline(id);
     this.closeDialog();
-    this.activeTab.set('CANCELLED');
   }
 
   openAdd(): void {

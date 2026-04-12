@@ -5,8 +5,14 @@
       <div class="section-title">Staff</div>
     </div>
 
-    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Add member</button>
+    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Invite member</button>
   </div>
+
+  @if (errorMessage()) {
+    <section class="card" style="padding:16px; color:#b42318;">
+      {{ errorMessage() }}
+    </section>
+  }
 
   <section class="card" style="overflow:hidden;">
     <div class="card__header" style="display:flex; justify-content:space-between; align-items:center;">
@@ -22,7 +28,7 @@
             <span class="avatar" aria-hidden="true"></span>
             <div>
               <div style="font-weight:800;">{{ m.name }}</div>
-              <div class="muted">{{ m.role }}</div>
+              <div class="muted">{{ m.roleLabel }}</div>
             </div>
           </div>
 
@@ -38,7 +44,7 @@
   <pc-staff-dialog
     [isOpen]="dialogOpen()"
     [initial]="editing()"
-    [title]="editing() ? 'Edit member' : 'Add member'"
+    [title]="editing() ? 'Edit member' : 'Invite member'"
     (save)="save($event)"
     (closed)="closeDialog()"
   />

@@ -39,6 +39,7 @@ export class Layout {
   protected readonly isProfileSaving = signal(false);
 
   protected readonly currentUser = this.authService.user;
+  protected readonly canAccessStaff = computed(() => this.authService.hasCompanyRole('OWNER', 'COMPANY_ADMIN'));
   protected readonly avatarLabel = computed(() => {
     const name = this.currentUser()?.name?.trim();
     return name ? name.charAt(0).toUpperCase() : 'U';

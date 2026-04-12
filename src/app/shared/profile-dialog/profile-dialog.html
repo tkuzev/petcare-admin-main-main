@@ -20,25 +20,55 @@
 
     <form [formGroup]="form" (ngSubmit)="submit()" class="dialog__form">
       <div class="preview-block">
-        @if (form.controls.pictureUrl.getRawValue()) {
-          <img
-            class="preview-avatar"
-            [src]="form.controls.pictureUrl.getRawValue()"
-            alt="Profile preview"
-          />
-        } @else {
-          <div class="preview-avatar preview-avatar--placeholder" aria-hidden="true">
-            {{ (form.controls.name.getRawValue() || 'U').charAt(0).toUpperCase() }}
-          </div>
-        }
+        <button
+          type="button"
+          class="avatar-upload-btn"
+          (click)="triggerAvatarUpload(avatarInput)"
+          aria-label="Upload profile photo"
+        >
+          @if (form.controls.pictureUrl.getRawValue()) {
+            <img
+              class="preview-avatar"
+              [src]="form.controls.pictureUrl.getRawValue()"
+              alt="Profile preview"
+            />
+          } @else {
+            <div class="preview-avatar preview-avatar--placeholder" aria-hidden="true">
+              {{ (form.controls.firstName.getRawValue() || 'U').charAt(0).toUpperCase() }}
+            </div>
+          }
+        </button>
+        <input
+          #avatarInput
+          type="file"
+          accept="image/*"
+          class="sr-only-file"
+          (change)="onAvatarSelected($event)"
+        />
       </div>
 
       <div class="field">
-        <label for="profile-name">Name</label>
-        <input id="profile-name" type="text" formControlName="name" />
+        <label for="profile-first-name">First name</label>
+        <input id="profile-first-name" type="text" formControlName="firstName" />
         <div class="field-error-slot">
-          @if (hasError('name')) {
-            <div class="field-error">Enter a valid name.</div>
+          @if (hasError('firstName')) {
+            <div class="field-error">Enter a valid first name.</div>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="profile-middle-name">Middle name</label>
+        <input id="profile-middle-name" type="text" formControlName="middleName" />
+        <div class="field-error-slot"></div>
+      </div>
+
+      <div class="field">
+        <label for="profile-last-name">Last name</label>
+        <input id="profile-last-name" type="text" formControlName="lastName" />
+        <div class="field-error-slot">
+          @if (hasError('lastName')) {
+            <div class="field-error">Enter a valid last name.</div>
           }
         </div>
       </div>
@@ -59,15 +89,9 @@
         <div class="field-error-slot"></div>
       </div>
 
-      <div class="field">
-        <label for="profile-picture">Picture URL</label>
-        <input id="profile-picture" type="text" formControlName="pictureUrl" />
-        <div class="field-error-slot"></div>
-      </div>
-
       <div class="dialog__actions">
-        <button type="button" class="btn btn--ghost" (click)="cancel()">Cancel</button>
-        <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        <button type="button" class="btn btn--danger" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="submit()">
           @if (saving()) {
             Saving...
           } @else {
@@ -76,5 +100,25 @@
         </button>
       </div>
     </form>
+
+    @if (pendingConfirm()) {
+      <div class="dialog-confirm-backdrop"></div>
+      <section class="dialog-confirm" aria-modal="true" role="alertdialog">
+        <h3>{{ pendingConfirm() === 'save' ? 'Save profile changes?' : 'Discard profile changes?' }}</h3>
+        <p>
+          {{ pendingConfirm() === 'save'
+            ? 'Are you sure you want to save these profile changes?'
+            : 'Are you sure you want to close without saving?' }}
+        </p>
+        <div class="dialog-confirm__actions">
+          <button type="button" class="btn" (click)="closeConfirm()">Back</button>
+          @if (pendingConfirm() === 'save') {
+            <button type="button" class="btn btn--primary" (click)="confirmSave()">Yes, save</button>
+          } @else {
+            <button type="button" class="btn btn--danger" (click)="confirmCancel()">Yes, close</button>
+          }
+        </div>
+      </section>
+    }
   </section>
 }

@@ -1,7 +1,22 @@
 <section class="pc-calendar-card">
   <div class="pc-calendar-card__top">
-    <div>
+    <div class="pc-calendar-card__heading">
       <div class="pc-calendar-card__eyebrow">Appointments Overview</div>
+
+      @if (canSwitchCalendars() && calendarOwners().length > 0) {
+        <label class="pc-calendar-filter">
+          <span class="pc-calendar-filter__label">Calendar</span>
+          <select
+            class="pc-calendar-filter__select"
+            [ngModel]="staffId() ?? ''"
+            (ngModelChange)="onStaffChange($event)"
+          >
+            @for (member of calendarOwners(); track member.id) {
+              <option [value]="member.id">{{ member.name }}</option>
+            }
+          </select>
+        </label>
+      }
     </div>
 
     <div class="pc-calendar-card__actions">
@@ -20,6 +35,11 @@
       <button type="button" class="btn btn--primary" (click)="requestAdd()">
         Add Appointment
       </button>
+      @if (canBlockCalendars()) {
+        <button type="button" class="btn" (click)="requestBlock()">
+          Block Time
+        </button>
+      }
     </div>
   </div>
 

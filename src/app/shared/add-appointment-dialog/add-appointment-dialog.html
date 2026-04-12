@@ -24,12 +24,13 @@
 
       <label class="pc-field">
         <span class="pc-label">Pet type<span aria-hidden="true">*</span></span>
-        <div class="pc-inputwrap">
+        <div class="pc-inputwrap pc-select-wrap">
           <select class="pc-input" formControlName="petType" required>
             <option value="Dog">Dog</option>
             <option value="Cat">Cat</option>
             <option value="Other">Other</option>
           </select>
+          <span class="pc-select-arrow" aria-hidden="true">⌄</span>
         </div>
       </label>
 
@@ -60,7 +61,7 @@
 
       <label class="pc-field">
         <span class="pc-label">Service<span aria-hidden="true">*</span></span>
-        <div class="pc-inputwrap">
+        <div class="pc-inputwrap pc-select-wrap">
           <select
             class="pc-input"
             formControlName="serviceId"
@@ -71,16 +72,36 @@
             @for (service of activeServices(); track service.id) {
               <option [value]="service.id">{{ service.name }}</option>
             }
+            <option [value]="otherServiceId">Other</option>
           </select>
+          <span class="pc-select-arrow" aria-hidden="true">⌄</span>
         </div>
         @if (isInvalid('serviceId')) {
           <span class="pc-error" role="alert">Required</span>
         }
       </label>
 
+      @if (showManualEndTime()) {
+        <label class="pc-field">
+          <span class="pc-label">Service name<span aria-hidden="true">*</span></span>
+          <div class="pc-inputwrap">
+            <input
+              class="pc-input"
+              type="text"
+              formControlName="otherServiceName"
+              required
+              [attr.aria-invalid]="isInvalid('otherServiceName')"
+            />
+          </div>
+          @if (isInvalid('otherServiceName')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
+        </label>
+      }
+
       <label class="pc-field">
         <span class="pc-label">Team member<span aria-hidden="true">*</span></span>
-        <div class="pc-inputwrap">
+        <div class="pc-inputwrap pc-select-wrap">
           <select
             class="pc-input"
             formControlName="staffId"
@@ -92,6 +113,7 @@
               <option [value]="m.id">{{ m.name }}</option>
             }
           </select>
+          <span class="pc-select-arrow" aria-hidden="true">⌄</span>
         </div>
         @if (isInvalid('staffId')) {
           <span class="pc-error" role="alert">Required</span>
@@ -119,48 +141,51 @@
         <div class="pc-inputwrap">
           <input
             class="pc-input"
-            type="time"
+            type="text"
             formControlName="startTime"
-            step="300"
+            inputmode="numeric"
+            maxlength="5"
+            placeholder="--:--"
+            (input)="onTimeInput('startTime', $event)"
+            (blur)="formatTime('startTime')"
             required
             [attr.aria-invalid]="isInvalid('startTime')"
           />
         </div>
         @if (isInvalid('startTime')) {
-          <span class="pc-error" role="alert">Required</span>
+          <span class="pc-error" role="alert">Use HH:MM (hours 01-23, minutes 00-59)</span>
         }
       </label>
 
-      <label class="pc-field">
-        <span class="pc-label">Duration<span aria-hidden="true">*</span></span>
-        <div class="pc-inputwrap">
-          <select class="pc-input" formControlName="duration" required>
-            <option value="15">15 min</option>
-            <option value="30">30 min</option>
-            <option value="45">45 min</option>
-            <option value="60">1 hour</option>
-            <option value="custom">Custom…</option>
-          </select>
-        </div>
-      </label>
-
-      @if (showCustomEnd()) {
+      @if (showManualEndTime()) {
         <label class="pc-field">
           <span class="pc-label">End time<span aria-hidden="true">*</span></span>
           <div class="pc-inputwrap">
             <input
               class="pc-input"
-              type="time"
-              formControlName="customEndTime"
-              step="300"
+              type="text"
+              formControlName="endTime"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="--:--"
+              (input)="onTimeInput('endTime', $event)"
+              (blur)="formatTime('endTime')"
               required
-              [attr.aria-invalid]="isInvalid('customEndTime')"
+              [attr.aria-invalid]="isInvalid('endTime')"
             />
           </div>
-          @if (isInvalid('customEndTime')) {
-            <span class="pc-error" role="alert">Required</span>
+          @if (isInvalid('endTime')) {
+            <span class="pc-error" role="alert">Use HH:MM (hours 01-24, minutes 00-59)</span>
+          }
+          @if (form.hasError('endBeforeStart') && form.controls.endTime.touched) {
+            <span class="pc-error" role="alert">End time must be after start time</span>
           }
         </label>
+      } @else {
+        <div class="pc-field pc-field--hint">
+          <span class="pc-label">End time</span>
+          <span class="pc-hint">Calculated automatically from selected service duration</span>
+        </div>
       }
 
       <label class="pc-field pc-field--full">

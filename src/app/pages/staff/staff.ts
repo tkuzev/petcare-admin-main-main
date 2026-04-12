@@ -1,4 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../data/auth.service';
+import { InvitationsService, InvitationRole } from '../../data/invitations.service';
 import { StaffService } from '../../data/staff.service';
 import { StaffDialog, StaffDraft } from '../../shared/staff-dialog/staff-dialog';
 
@@ -11,12 +14,18 @@ import { StaffDialog, StaffDraft } from '../../shared/staff-dialog/staff-dialog'
 })
 export class Staff {
   private readonly staffSvc = inject(StaffService);
+  private readonly invitationsSvc = inject(InvitationsService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly staff = this.staffSvc.staff;
   readonly activeCount = this.staffSvc.activeCount;
+  readonly canManageStaff = computed(() => this.auth.hasCompanyRole('OWNER', 'COMPANY_ADMIN'));
 
   readonly dialogOpen = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly saving = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   readonly editing = () => {
     const id = this.editingId();
@@ -28,6 +37,11 @@ export class Staff {
   };
 
   constructor() {
+    if (!this.canManageStaff()) {
+      void this.router.navigateByUrl('/dashboard');
+      return;
+    }
+
     this.staffSvc.loadAll();
   }
 
@@ -45,14 +59,28 @@ export class Staff {
     this.dialogOpen.set(false);
   }
 
-  save(draft: StaffDraft): void {
+  async save(draft: StaffDraft): Promise<void> {
+    this.errorMessage.set(null);
     const id = this.editingId();
     if (id) {
       this.staffSvc.updateMember(id, draft);
-    } else {
-      this.staffSvc.addMember(draft);
+      this.closeDialog();
+      return;
     }
 
-    this.closeDialog();
+    this.saving.set(true);
+
+    try {
+      await this.invitationsSvc.create({
+        email: draft.email,
+      });
+      this.closeDialog();
+    } catch (error) {
+      console.error('Failed to invite member', error);
+      this.errorMessage.set('Could not create the invitation. Please try again.');
+    } finally {
+      this.saving.set(false);
+    }
   }
+
 }

@@ -12,36 +12,88 @@
     <div class="pc-dialog__divider"></div>
 
     <section class="pc-dialog__body">
-      <p id="staff-desc" class="muted">Add or edit a team member.</p>
+      <p id="staff-desc" class="muted">
+        {{ isInviteMode() ? 'Invite a new team member by email.' : 'Edit an existing team member.' }}
+      </p>
 
       <div class="pc-form">
         <label class="pc-field">
-          <span class="pc-field__label">Name</span>
+          <span class="pc-field__label">Email</span>
           <input
-            type="text"
+            type="email"
             class="input"
-            autocomplete="name"
-            [formControl]="form.controls.name"
-            [attr.aria-invalid]="submitted() && form.controls.name.invalid"
+            autocomplete="email"
+            [formControl]="form.controls.email"
+            [attr.aria-invalid]="submitted() && form.controls.email.invalid"
           />
-          @if (submitted() && form.controls.name.invalid) {
-            <span class="pc-field__error">Name is required.</span>
+          @if (submitted() && form.controls.email.invalid) {
+            <span class="pc-field__error">Valid email is required.</span>
           }
         </label>
 
-        <label class="pc-field">
-          <span class="pc-field__label">Role</span>
-          <select class="input" [formControl]="form.controls.role">
-            @for (r of roles; track r) {
-              <option [value]="r">{{ r }}</option>
+        @if (!isInviteMode()) {
+          <label class="pc-field">
+            <span class="pc-field__label">First name</span>
+            <input
+              type="text"
+              class="input"
+              autocomplete="given-name"
+              [formControl]="form.controls.firstName"
+              [attr.aria-invalid]="submitted() && form.controls.firstName.invalid"
+            />
+            @if (submitted() && form.controls.firstName.invalid) {
+              <span class="pc-field__error">First name is required.</span>
             }
-          </select>
-        </label>
+          </label>
 
-        <label class="pc-check">
-          <input type="checkbox" [formControl]="form.controls.active" />
-          <span>Active</span>
-        </label>
+          <label class="pc-field">
+            <span class="pc-field__label">Middle name</span>
+            <input
+              type="text"
+              class="input"
+              autocomplete="additional-name"
+              [formControl]="form.controls.middleName"
+            />
+          </label>
+
+          <label class="pc-field">
+            <span class="pc-field__label">Last name</span>
+            <input
+              type="text"
+              class="input"
+              autocomplete="family-name"
+              [formControl]="form.controls.lastName"
+              [attr.aria-invalid]="submitted() && form.controls.lastName.invalid"
+            />
+            @if (submitted() && form.controls.lastName.invalid) {
+              <span class="pc-field__error">Last name is required.</span>
+            }
+          </label>
+
+          <div class="pc-field">
+            <span class="pc-field__label">Roles</span>
+            <div class="pc-form" style="gap:10px;">
+              @for (r of roles; track r) {
+                <label class="pc-check">
+                  <input
+                    type="checkbox"
+                    [checked]="hasRole(r)"
+                    (change)="toggleRole(r, $any($event.target).checked)"
+                  />
+                  <span>{{ r }}</span>
+                </label>
+              }
+            </div>
+            @if (submitted() && form.controls.roles.invalid) {
+              <span class="pc-field__error">Select at least one role.</span>
+            }
+          </div>
+
+          <label class="pc-check">
+            <input type="checkbox" [formControl]="form.controls.active" />
+            <span>Active</span>
+          </label>
+        }
       </div>
     </section>
 
@@ -49,7 +101,7 @@
 
     <footer class="pc-dialog__footer">
       <button type="button" class="btn" (click)="close()">Cancel</button>
-      <button type="submit" class="btn btn--primary">Save</button>
+      <button type="submit" class="btn btn--primary">{{ isInviteMode() ? 'Send invite' : 'Save' }}</button>
     </footer>
   </form>
 </dialog>

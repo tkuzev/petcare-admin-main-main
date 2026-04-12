@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   ViewChild,
+  computed,
   effect,
   input,
   output,
@@ -19,6 +20,7 @@ export type AppointmentRequest = {
   ownerEmail?: string;
   notes?: string;
   staffName?: string;
+  mode?: 'review' | 'cancel' | 'complete' | 'view';
 };
 
 @Component({
@@ -29,7 +31,7 @@ export type AppointmentRequest = {
         <header class="pc-dialog__header">
           <div>
             <div class="muted">Approval request</div>
-            <h2 id="dlg-title" class="pc-dialog__title">Review appointment</h2>
+            <h2 id="dlg-title" class="pc-dialog__title">{{ title() }}</h2>
           </div>
 
           <button type="button" class="pc-icon-btn" (click)="close()">✕</button>
@@ -39,9 +41,7 @@ export type AppointmentRequest = {
 
         @if (request(); as requestItem) {
           <section class="pc-dialog__body">
-            <p id="dlg-desc" class="muted">
-              Confirm or decline this booking request.
-            </p>
+            <p id="dlg-desc" class="muted">{{ description() }}</p>
 
             <div class="pc-kv">
               <div class="pc-kv__row">
@@ -83,11 +83,21 @@ export type AppointmentRequest = {
           <div class="pc-dialog__divider"></div>
 
           <footer class="pc-dialog__footer">
-            <button type="button" class="btn" (click)="close()">Cancel</button>
-            <div style="display:flex; gap:10px;">
-              <button type="button" class="btn" (click)="decline.emit(requestItem.id)">Decline</button>
-              <button type="button" class="btn btn--primary" (click)="approve.emit(requestItem.id)">Approve</button>
-            </div>
+            @if (mode() === 'review') {
+              <button type="button" class="btn" (click)="close()">Cancel</button>
+              <div style="display:flex; gap:10px;">
+                <button type="button" class="btn" (click)="decline.emit(requestItem.id)">Decline</button>
+                <button type="button" class="btn btn--primary" (click)="approve.emit(requestItem.id)">Approve</button>
+              </div>
+            } @else if (mode() === 'cancel') {
+              <button type="button" class="btn" (click)="close()">Back</button>
+              <button type="button" class="btn" (click)="decline.emit(requestItem.id)">Confirm cancel</button>
+            } @else if (mode() === 'complete') {
+              <button type="button" class="btn" (click)="close()">Back</button>
+              <button type="button" class="btn" (click)="approve.emit(requestItem.id)">Confirm completed</button>
+            } @else {
+              <button type="button" class="btn btn--primary" (click)="close()">Close</button>
+            }
           </footer>
         }
       </form>
@@ -102,6 +112,30 @@ export type AppointmentRequest = {
 export class ApprovalDialog {
   request = input<AppointmentRequest | null>(null);
   isOpen = input<boolean>(false);
+  protected readonly isPending = computed(() => this.request()?.status === 'PENDING');
+  protected readonly mode = computed(() => this.request()?.mode ?? (this.isPending() ? 'review' : 'view'));
+  protected readonly title = computed(() => {
+    switch (this.mode()) {
+      case 'cancel':
+        return 'Cancel appointment';
+      case 'complete':
+        return 'Complete appointment';
+      default:
+        return 'Review appointment';
+    }
+  });
+  protected readonly description = computed(() => {
+    switch (this.mode()) {
+      case 'review':
+        return 'Confirm or decline this booking request.';
+      case 'cancel':
+        return 'Please confirm you want to cancel this appointment.';
+      case 'complete':
+        return 'Please confirm you want to mark this appointment as completed.';
+      default:
+        return 'Review the appointment details.';
+    }
+  });
 
   approve = output<string>();
   decline = output<string>();

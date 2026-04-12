@@ -14,7 +14,9 @@
       <a class="nav-link" routerLink="/dashboard" routerLinkActive="nav-link--active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
       <a class="nav-link" routerLink="/appointments" routerLinkActive="nav-link--active">Appointments</a>
       <a class="nav-link" routerLink="/services" routerLinkActive="nav-link--active">Services</a>
-      <a class="nav-link" routerLink="/staff" routerLinkActive="nav-link--active">Staff</a>
+      @if (canAccessStaff()) {
+        <a class="nav-link" routerLink="/staff" routerLinkActive="nav-link--active">Staff</a>
+      }
     </nav>
 
     <div class="sidebar__footer">

@@ -1,0 +1,119 @@
+<div class="pc-modal" role="dialog" aria-modal="true" aria-labelledby="pc-block-title">
+  <div class="pc-modal__header">
+    <h2 id="pc-block-title" class="pc-modal__title">Block time</h2>
+    <button type="button" class="pc-icon-btn" (click)="cancel()" aria-label="Close dialog">✕</button>
+  </div>
+
+  <form class="pc-modal__body" (ngSubmit)="submit()">
+    <div class="pc-grid">
+      <label class="pc-field">
+        <span class="pc-label">Practitioner</span>
+        <div class="pc-inputwrap pc-select-wrap">
+          <select class="pc-input" [formControl]="form.controls.staffId">
+            @for (member of availableStaff(); track member.id) {
+              <option [value]="member.id">{{ member.name }}</option>
+            }
+          </select>
+          <span class="pc-select-arrow" aria-hidden="true">⌄</span>
+        </div>
+      </label>
+
+      <label class="pc-field">
+        <span class="pc-label">Title</span>
+        <div class="pc-inputwrap">
+          <input class="pc-input" type="text" [formControl]="form.controls.title" />
+        </div>
+      </label>
+
+      <label class="pc-field">
+        <span class="pc-label">Mode</span>
+        <div class="pc-inputwrap pc-select-wrap">
+          <select class="pc-input" [formControl]="form.controls.mode">
+            <option value="hours">Hours</option>
+            <option value="days">Full days</option>
+          </select>
+          <span class="pc-select-arrow" aria-hidden="true">⌄</span>
+        </div>
+      </label>
+
+      @if (mode() === 'hours') {
+        <label class="pc-field">
+          <span class="pc-label">Date</span>
+          <div class="pc-inputwrap">
+            <input class="pc-input" type="date" [formControl]="form.controls.date" />
+          </div>
+        </label>
+
+        <label class="pc-field">
+          <span class="pc-label">Start time</span>
+          <div class="pc-inputwrap">
+            <input
+              class="pc-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="--:--"
+              [formControl]="form.controls.startTime"
+              (input)="onTimeInput('startTime', $event)"
+              (blur)="formatTime('startTime')"
+            />
+          </div>
+        </label>
+
+        <label class="pc-field">
+          <span class="pc-label">End time</span>
+          <div class="pc-inputwrap">
+            <input
+              class="pc-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="--:--"
+              [formControl]="form.controls.endTime"
+              (input)="onTimeInput('endTime', $event)"
+              (blur)="formatTime('endTime')"
+            />
+          </div>
+        </label>
+      } @else {
+        <label class="pc-field">
+          <span class="pc-label">Start date</span>
+          <div class="pc-inputwrap">
+            <input class="pc-input" type="date" [formControl]="form.controls.startDate" />
+          </div>
+        </label>
+
+        <label class="pc-field">
+          <span class="pc-label">End date</span>
+          <div class="pc-inputwrap">
+            <input class="pc-input" type="date" [formControl]="form.controls.endDate" />
+          </div>
+        </label>
+      }
+
+      @if (form.hasError('timeOrder') && (form.touched || form.dirty)) {
+        <div class="pc-field pc-field--full">
+          <span class="pc-error">End time must be after start time.</span>
+        </div>
+      }
+
+      @if (form.hasError('dateOrder') && (form.touched || form.dirty)) {
+        <div class="pc-field pc-field--full">
+          <span class="pc-error">End date must be the same as or after start date.</span>
+        </div>
+      }
+
+      <label class="pc-field pc-field--full">
+        <span class="pc-label">Notes</span>
+        <div class="pc-inputwrap">
+          <textarea class="pc-input" rows="4" [formControl]="form.controls.notes"></textarea>
+        </div>
+      </label>
+    </div>
+
+    <div class="pc-modal__footer">
+      <button type="button" class="btn btn--ghost" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn btn--primary">Save block</button>
+    </div>
+  </form>
+</div>

@@ -117,3 +117,12 @@
   flex-wrap: wrap;
   justify-content: end;
 }
+
+.appointments__btn--danger {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.appointments__btn--danger:hover {
+  background: #fecaca;
+}

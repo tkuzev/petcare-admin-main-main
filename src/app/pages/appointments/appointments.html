@@ -63,8 +63,7 @@
             @for (ac of vm.actions; track ac.id) {
             <button
               type="button"
-              class="btn"
-              [class.btn--primary]="!!ac.primary"
+              [class]="actionClass(ac)"
               (click)="onAction(ac.id, vm)"
             >
             {{ ac.label }}

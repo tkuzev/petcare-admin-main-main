@@ -32,8 +32,22 @@
 
 <app-calendar
   [staffId]="activeStaffId()"
+  [appointments]="appointments()"
+  [blocks]="blocks()"
+  [calendarOwners]="calendarOwners()"
+  [canSwitchCalendars]="canSwitchCalendars()"
+  [canBlockCalendars]="canBlockCalendars()"
   (addRequested)="openAdd()"
+  (blockRequested)="openBlockDialog()"
+  (staffChanged)="changeCalendarOwner($event)"
+  (appointmentSelected)="openAppointmentDetails($event)"
 ></app-calendar>
+
+@if (blockFeedback()) {
+  <div class="rounded-2xl border border-ink-100 bg-white px-5 py-3 text-sm text-ink-600">
+    {{ blockFeedback() }}
+  </div>
+}
 
   <div class="grid lg:grid-cols-2 gap-6">
     <section class="rounded-2xl bg-white shadow-card overflow-hidden">

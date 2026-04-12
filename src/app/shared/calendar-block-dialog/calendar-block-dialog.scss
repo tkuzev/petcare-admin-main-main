@@ -1,3 +1,7 @@
+:host {
+  display: block;
+}
+
 .pc-modal {
   width: min(760px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
@@ -50,10 +54,6 @@
   grid-column: 1 / -1;
 }
 
-.pc-field--hint {
-  align-content: center;
-}
-
 .pc-label {
   font-size: 12px;
   color: rgba(15, 23, 42, 0.7);
@@ -82,30 +82,10 @@
   outline-offset: 2px;
 }
 
-.pc-input[aria-invalid="true"] {
-  border-color: rgba(220, 38, 38, 0.45);
-}
-
-.pc-error {
-  font-size: 12px;
-  line-height: 1.2;
-  color: #b91c1c;
-}
-
-.pc-hint {
-  font-size: 13px;
-  color: #64748b;
-}
-
 textarea.pc-input {
   resize: vertical;
-  min-height: 84px;
+  min-height: 96px;
   height: auto;
-}
-
-.pc-input[type='text']::placeholder {
-  color: rgba(100, 116, 139, 0.8);
-  letter-spacing: 0.08em;
 }
 
 .pc-select-wrap .pc-input {
@@ -116,11 +96,6 @@ textarea.pc-input {
   cursor: pointer;
 }
 
-.pc-select-wrap .pc-input:disabled {
-  cursor: default;
-  background: #f8fafc;
-}
-
 .pc-select-arrow {
   position: absolute;
   right: 12px;
@@ -129,6 +104,12 @@ textarea.pc-input {
   font-size: 18px;
   color: #475569;
   pointer-events: none;
+}
+
+.pc-error {
+  font-size: 12px;
+  line-height: 1.2;
+  color: #b91c1c;
 }
 
 .pc-modal__footer {
