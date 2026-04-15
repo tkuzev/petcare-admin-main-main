@@ -71,6 +71,46 @@
           </label>
 
           <div class="pc-field">
+            <span class="pc-field__label">Working time</span>
+            <div class="pc-time-row">
+              <label class="pc-field">
+                <span class="pc-field__label">Start</span>
+                <input
+                  type="text"
+                  class="input"
+                  inputmode="numeric"
+                  maxlength="5"
+                  placeholder="09:00"
+                  [formControl]="form.controls.workingStartTime"
+                  (input)="onTimeInput('workingStartTime', $event)"
+                  (blur)="formatTime('workingStartTime')"
+                />
+              </label>
+
+              <label class="pc-field">
+                <span class="pc-field__label">End</span>
+                <input
+                  type="text"
+                  class="input"
+                  inputmode="numeric"
+                  maxlength="5"
+                  placeholder="17:00"
+                  [formControl]="form.controls.workingEndTime"
+                  (input)="onTimeInput('workingEndTime', $event)"
+                  (blur)="formatTime('workingEndTime')"
+                />
+              </label>
+            </div>
+
+            @if (submitted() && (form.controls.workingStartTime.invalid || form.controls.workingEndTime.invalid)) {
+              <span class="pc-field__error">Use HH:MM for working hours.</span>
+            }
+            @if (submitted() && form.hasError('timeOrder')) {
+              <span class="pc-field__error">Working end time must be after start time.</span>
+            }
+          </div>
+
+          <div class="pc-field">
             <span class="pc-field__label">Roles</span>
             <div class="pc-form" style="gap:10px;">
               @for (r of roles; track r) {

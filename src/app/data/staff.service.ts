@@ -10,11 +10,14 @@ export type StaffMember = {
   firstName?: string;
   middleName?: string;
   lastName?: string;
+  phone?: string;
   roles: StaffRole[];
   roleLabel: string;
   active: boolean;
   userId?: string;
   email?: string;
+  workingStartTime?: string;
+  workingEndTime?: string;
 };
 
 export type StaffUpsertPayload = Omit<StaffMember, 'id' | 'name' | 'roleLabel'>;
@@ -27,9 +30,12 @@ type StaffApiResponse = {
   middleName?: string | null;
   lastName?: string | null;
   email: string;
+  phone?: string | null;
   role?: string | null;
   roles?: string[] | null;
   active: boolean;
+  workingStartTime?: string | null;
+  workingEndTime?: string | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -63,30 +69,28 @@ export class StaffService {
   }
 
   updateMember(id: string, patch: Partial<StaffUpsertPayload>): void {
-    this._staff.update(list =>
-      list.map(item => {
-        if (item.id !== id) {
-          return item;
-        }
+    const member = this.staff().find(item => item.id === id);
+    if (!member) {
+      return;
+    }
 
-        const roles = patch.roles ?? item.roles;
-        const firstName = patch.firstName ?? item.firstName;
-        const middleName = patch.middleName ?? item.middleName;
-        const lastName = patch.lastName ?? item.lastName;
+    const payload = {
+      email: (patch.email ?? member.email ?? '').trim(),
+      firstName: (patch.firstName ?? member.firstName ?? '').trim(),
+      lastName: (patch.lastName ?? member.lastName ?? '').trim(),
+      phone: (patch.phone ?? member.phone ?? '').trim() || null,
+      roles: this.mapRolesToApi(patch.roles ?? member.roles),
+      status: (patch.active ?? member.active) ? 'ACTIVE' : 'INACTIVE',
+      workingStartTime: this.normalizeApiTime(patch.workingStartTime ?? member.workingStartTime),
+      workingEndTime: this.normalizeApiTime(patch.workingEndTime ?? member.workingEndTime),
+    };
 
-        return {
-          ...item,
-          ...patch,
-          firstName,
-          middleName,
-          lastName,
-          roles,
-          name: this.buildStaffName(firstName, middleName, lastName, item.name),
-          roleLabel: this.formatRoleLabel(roles),
-        };
-      }),
-    );
-    console.warn('Staff update is frontend-only for now. Backend endpoint is not implemented yet.');
+    this.http.put<StaffApiResponse>(`/api/company/staff/${id}`, payload).subscribe({
+      next: updated => {
+        this._staff.update(list => list.map(item => item.id === id ? this.mapFromApi(updated) : item));
+      },
+      error: error => console.error('Failed to update staff member', error),
+    });
   }
 
   nameById(id: string): string | undefined {
@@ -131,11 +135,53 @@ export class StaffService {
       firstName,
       middleName,
       lastName,
+      phone: item.phone?.trim() || undefined,
       email: item.email,
       roles,
       roleLabel: this.formatRoleLabel(roles),
       active: item.active,
+      workingStartTime: this.normalizeDisplayTime(item.workingStartTime),
+      workingEndTime: this.normalizeDisplayTime(item.workingEndTime),
     };
+  }
+
+  private mapRolesToApi(roles: StaffRole[]): string[] {
+    return roles.map(role => {
+      switch (role) {
+        case 'Admin':
+          return 'COMPANY_ADMIN';
+        case 'Manager':
+          return 'MANAGER';
+        case 'Vet':
+          return 'VET';
+        case 'Groomer':
+          return 'GROOMER';
+        case 'Reception':
+          return 'RECEPTION';
+      }
+    });
+  }
+
+  private normalizeDisplayTime(value?: string | null): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length >= 5 ? trimmed.slice(0, 5) : trimmed;
+  }
+
+  private normalizeApiTime(value?: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    return trimmed.length === 5 ? `${trimmed}:00` : trimmed;
   }
 
   private mapRoles(item: StaffApiResponse): StaffRole[] {
