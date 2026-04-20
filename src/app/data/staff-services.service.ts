@@ -85,6 +85,29 @@ export class StaffServicesService {
     }));
   }
 
+  deactivateService(serviceId: string): void {
+    this.assignmentsByStaff.update(current => {
+      const next = Object.fromEntries(
+        Object.entries(current).map(([staffId, items]) => [
+          staffId,
+          items.map(item => (item.serviceId === serviceId ? { ...item, active: false } : item)),
+        ]),
+      );
+      return next;
+    });
+  }
+
+  removeService(serviceId: string): void {
+    this.assignmentsByStaff.update(current =>
+      Object.fromEntries(
+        Object.entries(current).map(([staffId, items]) => [
+          staffId,
+          items.filter(item => item.serviceId !== serviceId),
+        ]),
+      ),
+    );
+  }
+
   private mapFromApi(item: StaffServiceAssignmentApi): StaffServiceAssignment {
     return {
       id: String(item.id),

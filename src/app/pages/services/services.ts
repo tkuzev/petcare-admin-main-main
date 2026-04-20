@@ -28,9 +28,12 @@ export class Services {
 
   readonly dialogOpen = signal(false);
   readonly editing = signal<ServiceItem | null>(null);
+  readonly pendingDelete = signal<ServiceItem | null>(null);
   readonly selectedStaffId = signal<string | null>(null);
   readonly assignmentsSaving = signal(false);
   readonly assignmentsError = signal<string | null>(null);
+  readonly serviceActionError = signal<string | null>(null);
+  readonly deletingService = signal(false);
   readonly assignmentDrafts = signal<Record<string, StaffServiceAssignmentDraft>>({});
 
   readonly assignmentRows = computed(() => {
@@ -42,10 +45,13 @@ export class Services {
     return this.services().map(service => {
       const assignment = assignments.get(service.id);
       const draft = drafts[service.id];
+      const enabledBySalon = service.active;
+      const assigned = enabledBySalon && (draft?.active ?? !!assignment);
 
       return {
         service,
-        assigned: draft?.active ?? !!assignment,
+        assigned,
+        enabledBySalon,
         durationMin: draft?.durationMin ?? assignment?.durationMin ?? null,
         price: draft?.price ?? assignment?.price ?? null,
       };
@@ -94,32 +100,102 @@ export class Services {
       }
       this.assignmentDrafts.set(next);
     });
+
+    effect(() => {
+      const activeServiceIds = new Set(this.services().filter(service => service.active).map(service => service.id));
+      this.assignmentDrafts.update(current => {
+        let changed = false;
+        const next: Record<string, StaffServiceAssignmentDraft> = {};
+
+        for (const [serviceId, draft] of Object.entries(current)) {
+          if (!activeServiceIds.has(serviceId)) {
+            changed = true;
+            continue;
+          }
+          next[serviceId] = draft;
+        }
+
+        return changed ? next : current;
+      });
+    });
   }
 
   openAdd(): void {
+    this.serviceActionError.set(null);
     this.editing.set(null);
     this.dialogOpen.set(true);
   }
 
   openEdit(item: ServiceItem): void {
+    this.serviceActionError.set(null);
     this.editing.set(item);
     this.dialogOpen.set(true);
+  }
+
+  confirmDelete(item: ServiceItem): void {
+    this.serviceActionError.set(null);
+    this.pendingDelete.set(item);
   }
 
   closeDialog(): void {
     this.dialogOpen.set(false);
   }
 
-  save(draft: ServiceDraft): void {
-    const editing = this.editing();
+  closeDeleteDialog(): void {
+    if (this.deletingService()) {
+      return;
+    }
+    this.pendingDelete.set(null);
+  }
 
-    if (editing) {
-      this.servicesSvc.updateService(editing.id, draft);
-    } else {
-      this.servicesSvc.addService(draft);
+  async save(draft: ServiceDraft): Promise<void> {
+    const editing = this.editing();
+    this.serviceActionError.set(null);
+
+    try {
+      if (editing) {
+        const updated = await this.servicesSvc.updateService(editing.id, draft);
+        if (updated && !updated.active) {
+          this.staffServicesSvc.deactivateService(updated.id);
+        }
+      } else {
+        await this.servicesSvc.addService(draft);
+      }
+      this.closeDialog();
+    } catch (error) {
+      console.error('Failed to save service', error);
+      this.serviceActionError.set('Could not save service. Please try again.');
+    }
+  }
+
+  async deletePendingService(): Promise<void> {
+    const item = this.pendingDelete();
+    if (!item) {
+      return;
     }
 
-    this.closeDialog();
+    this.deletingService.set(true);
+    this.serviceActionError.set(null);
+
+    try {
+      await this.servicesSvc.deleteService(item.id);
+      this.staffServicesSvc.removeService(item.id);
+      this.assignmentDrafts.update(current => {
+        const next = { ...current };
+        delete next[item.id];
+        return next;
+      });
+      this.pendingDelete.set(null);
+    } catch (error: any) {
+      console.error('Failed to delete service', error);
+      const message =
+        error?.error?.message && typeof error.error.message === 'string'
+          ? error.error.message
+          : 'Could not delete service. Please try again.';
+      this.serviceActionError.set(message);
+    } finally {
+      this.deletingService.set(false);
+    }
   }
 
   selectStaff(staffId: string): void {
@@ -127,6 +203,11 @@ export class Services {
   }
 
   toggleAssignment(serviceId: string, checked: boolean): void {
+    const service = this.services().find(item => item.id === serviceId);
+    if (!service?.active && checked) {
+      return;
+    }
+
     this.assignmentDrafts.update(current => {
       const next = { ...current };
       if (!checked) {
@@ -146,6 +227,11 @@ export class Services {
   }
 
   updateDuration(serviceId: string, value: string): void {
+    const service = this.services().find(item => item.id === serviceId);
+    if (!service?.active) {
+      return;
+    }
+
     const durationMin = value.trim() === '' ? null : Number(value);
     this.assignmentDrafts.update(current => ({
       ...current,
@@ -159,6 +245,11 @@ export class Services {
   }
 
   updatePrice(serviceId: string, value: string): void {
+    const service = this.services().find(item => item.id === serviceId);
+    if (!service?.active) {
+      return;
+    }
+
     const price = value.trim() === '' ? null : Number(value);
     this.assignmentDrafts.update(current => ({
       ...current,

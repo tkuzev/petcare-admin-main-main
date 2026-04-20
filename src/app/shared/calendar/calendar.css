@@ -180,6 +180,11 @@
   box-shadow: none;
 }
 
+:host ::ng-deep .fc .pc-event--blocked-all-day {
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+}
+
 :host ::ng-deep .fc .fc-day-today {
   background: #fffdf4 !important;
 }

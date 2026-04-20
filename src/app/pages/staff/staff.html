@@ -4,8 +4,6 @@
       <div class="muted">Team</div>
       <div class="section-title">Staff</div>
     </div>
-
-    <button type="button" class="btn btn--primary" (click)="openAdd()">+ Invite member</button>
   </div>
 
   @if (errorMessage()) {
@@ -14,10 +12,86 @@
     </section>
   }
 
+  <section class="card staff-schedule">
+    <div class="card__header staff-schedule__header">
+      <div class="staff-schedule__intro">
+        <div class="section-title">Salon working schedule</div>
+        <div class="muted">Set the default opening days and hours for the whole salon.</div>
+      </div>
+
+      <button type="button" class="btn btn--primary" [disabled]="scheduleSaving()" (click)="requestSaveSalonSchedule()">
+        {{ scheduleSaving() ? 'Saving...' : 'Save salon schedule' }}
+      </button>
+    </div>
+    <div class="card__divider"></div>
+
+    <div class="staff-schedule__body staff-schedule__body--weekly">
+      <div class="schedule-day-header">
+        <span>Day</span>
+        <span>Shift</span>
+        <span></span>
+        <span>Status</span>
+      </div>
+
+      @for (day of weekDays; track day.value) {
+        <div class="schedule-day-row">
+          <label class="day-pill">
+              <input
+                type="checkbox"
+                [checked]="hasScheduleDay(day.value)"
+                (change)="toggleScheduleDay(day.value, $any($event.target).checked)"
+              />
+              <span>{{ day.label }}</span>
+          </label>
+
+          <div class="schedule-time-group" [class.schedule-time-group--disabled]="!hasScheduleDay(day.value)">
+            <input
+              type="text"
+              class="input schedule-time-input"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="09:00"
+              [disabled]="!hasScheduleDay(day.value)"
+              [value]="scheduleRow(day.value).startTime"
+              (input)="updateScheduleDayTime(day.value, 'startTime', $event)"
+              (blur)="formatScheduleDayTime(day.value, 'startTime')"
+            />
+
+            <span class="schedule-time-separator">to</span>
+
+            <input
+              type="text"
+              class="input schedule-time-input"
+              inputmode="numeric"
+              maxlength="5"
+              placeholder="17:00"
+              [disabled]="!hasScheduleDay(day.value)"
+              [value]="scheduleRow(day.value).endTime"
+              (input)="updateScheduleDayTime(day.value, 'endTime', $event)"
+              (blur)="formatScheduleDayTime(day.value, 'endTime')"
+            />
+          </div>
+
+          <span class="schedule-status" [class.schedule-status--off]="!hasScheduleDay(day.value)">
+            {{ hasScheduleDay(day.value) ? 'Open' : 'Closed' }}
+          </span>
+        </div>
+      }
+    </div>
+
+    @if (scheduleMessage()) {
+      <div class="card__divider"></div>
+      <div class="staff-schedule__message">{{ scheduleMessage() }}</div>
+    }
+  </section>
+
   <section class="card" style="overflow:hidden;">
-    <div class="card__header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="card__header staff-list__header">
       <div class="section-title">Members</div>
-      <div class="muted">{{ activeCount() }} active</div>
+      <div class="staff-list__summary">
+        <div class="muted">{{ activeCount() }} active</div>
+        <button type="button" class="btn btn--primary" (click)="openAdd()">+ Invite member</button>
+      </div>
     </div>
     <div class="card__divider"></div>
 
@@ -26,13 +100,23 @@
         <div class="row">
           <div class="row__left">
             <span class="avatar" aria-hidden="true"></span>
-            <div>
-              <div style="font-weight:800;">{{ m.name }}</div>
-              <div class="muted">{{ m.roleLabel }}</div>
+            <div class="row__meta">
+              <div class="row__name-line">
+                <div class="row__name">{{ m.name }}</div>
+                <span class="badge staff-role-badge">{{ m.roleLabel }}</span>
+              </div>
+              <div class="row__schedule">
+                <span class="row__schedule-label">Days</span>
+                <span>{{ m.workingDays.join(', ') || 'No working days' }}</span>
+              </div>
+              <div class="row__schedule">
+                <span class="row__schedule-label">Hours</span>
+                <span>{{ m.workingStartTime || '09:00' }} - {{ m.workingEndTime || '17:00' }}</span>
+              </div>
             </div>
           </div>
 
-          <div style="display:flex; gap:10px; align-items:center;">
+          <div class="row__actions">
             <span [class]="m.active ? 'badge badge--ok' : 'badge'">{{ m.active ? 'Active' : 'Inactive' }}</span>
             <button type="button" class="btn" (click)="openEdit(m.id)" aria-label="Edit member {{ m.name }}">Edit</button>
           </div>
@@ -44,8 +128,21 @@
   <pc-staff-dialog
     [isOpen]="dialogOpen()"
     [initial]="editing()"
+    [salonSchedule]="salonSchedule()"
     [title]="editing() ? 'Edit member' : 'Invite member'"
     (save)="save($event)"
     (closed)="closeDialog()"
   />
+
+  @if (confirmScheduleOpen()) {
+    <div class="confirm-backdrop" aria-hidden="true"></div>
+    <section class="confirm-dialog" role="alertdialog" aria-modal="true">
+      <h3>Save salon schedule?</h3>
+      <p>This can affect which days and hours are valid for every staff member.</p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn" (click)="closeScheduleConfirm()">Back</button>
+        <button type="button" class="btn btn--primary" (click)="saveSalonSchedule()">Yes, save</button>
+      </div>
+    </section>
+  }
 </div>

@@ -1,2 +1,76 @@
 .page { display: grid; gap: 16px; }
 .page__header { display:flex; justify-content:space-between; align-items:flex-end; gap: 16px; }
+
+.services-action-error {
+  padding: 16px;
+  color: #b42318;
+}
+
+.services-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.services-assignments__hint {
+  padding: 12px 16px;
+  color: #475569;
+  font-size: 13px;
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.services-assignments__row--inactive {
+  opacity: 0.7;
+}
+
+.services-assignments__meta {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.btn--danger {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.btn--danger:hover {
+  background: #ffe4e6;
+}
+
+.services-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.services-confirm {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 91;
+  width: min(90vw, 420px);
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.services-confirm h3 {
+  margin: 0 0 8px;
+}
+
+.services-confirm p {
+  margin: 0;
+  color: #475569;
+}
+
+.services-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}

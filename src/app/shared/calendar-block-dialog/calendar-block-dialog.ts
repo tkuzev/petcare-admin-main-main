@@ -7,7 +7,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { DialogRef } from '@angular/cdk/dialog';
+import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { startWith } from 'rxjs';
 import { AuthService } from '../../data/auth.service';
@@ -15,6 +15,9 @@ import { StaffService } from '../../data/staff.service';
 import { CalendarBlockCreate } from '../../data/calendar-blocks.service';
 
 type BlockMode = 'hours' | 'days';
+type CalendarBlockDialogData = {
+  staffId?: string | null;
+};
 
 @Component({
   selector: 'app-calendar-block-dialog',
@@ -29,6 +32,7 @@ export class CalendarBlockDialog {
   private readonly fb = inject(FormBuilder);
   private readonly ref = inject(DialogRef<CalendarBlockCreate | null>);
   private readonly auth = inject(AuthService);
+  private readonly data = inject<CalendarBlockDialogData | null>(DIALOG_DATA, { optional: true });
   readonly staffSvc = inject(StaffService);
 
   readonly form = this.fb.nonNullable.group({
@@ -60,7 +64,6 @@ export class CalendarBlockDialog {
     const currentStaffId = this.staffSvc.currentStaffId();
     return all.filter(item => item.id === currentStaffId);
   });
-
   constructor() {
     this.staffSvc.loadAll();
 
@@ -71,39 +74,16 @@ export class CalendarBlockDialog {
       }
 
       const current = this.form.controls.staffId.value;
+      const preferred = this.data?.staffId ?? '';
       if (!current || !list.some(item => item.id === current)) {
-        this.form.controls.staffId.setValue(list[0]!.id);
+        this.form.controls.staffId.setValue(
+          list.some(item => item.id === preferred) ? preferred : list[0]!.id,
+        );
       }
     });
 
     effect(() => {
-      const isHours = this.mode() === 'hours';
-      const dateCtrl = this.form.controls.date;
-      const startDateCtrl = this.form.controls.startDate;
-      const endDateCtrl = this.form.controls.endDate;
-      const startTimeCtrl = this.form.controls.startTime;
-      const endTimeCtrl = this.form.controls.endTime;
-
-      if (isHours) {
-        dateCtrl.setValidators([Validators.required]);
-        startTimeCtrl.setValidators([Validators.required, this.timeValidator()]);
-        endTimeCtrl.setValidators([Validators.required, this.timeValidator()]);
-        startDateCtrl.clearValidators();
-        endDateCtrl.clearValidators();
-      } else {
-        startDateCtrl.setValidators([Validators.required]);
-        endDateCtrl.setValidators([Validators.required]);
-        dateCtrl.clearValidators();
-        startTimeCtrl.clearValidators();
-        endTimeCtrl.clearValidators();
-      }
-
-      dateCtrl.updateValueAndValidity({ emitEvent: false });
-      startDateCtrl.updateValueAndValidity({ emitEvent: false });
-      endDateCtrl.updateValueAndValidity({ emitEvent: false });
-      startTimeCtrl.updateValueAndValidity({ emitEvent: false });
-      endTimeCtrl.updateValueAndValidity({ emitEvent: false });
-      this.form.updateValueAndValidity({ emitEvent: false });
+      this.applyModeValidators(this.mode());
     });
   }
 
@@ -112,6 +92,7 @@ export class CalendarBlockDialog {
   }
 
   submit(): void {
+    this.applyModeValidators(this.form.controls.mode.value);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -165,6 +146,36 @@ export class CalendarBlockDialog {
     const formatted = this.formatDigitsToTime(digits);
     input.value = formatted;
     this.form.controls[name].setValue(formatted, { emitEvent: false });
+  }
+
+  private applyModeValidators(mode: BlockMode): void {
+    const isHours = mode === 'hours';
+    const dateCtrl = this.form.controls.date;
+    const startDateCtrl = this.form.controls.startDate;
+    const endDateCtrl = this.form.controls.endDate;
+    const startTimeCtrl = this.form.controls.startTime;
+    const endTimeCtrl = this.form.controls.endTime;
+
+    if (isHours) {
+      dateCtrl.setValidators([Validators.required]);
+      startTimeCtrl.setValidators([Validators.required, this.timeValidator()]);
+      endTimeCtrl.setValidators([Validators.required, this.timeValidator()]);
+      startDateCtrl.clearValidators();
+      endDateCtrl.clearValidators();
+    } else {
+      startDateCtrl.setValidators([Validators.required]);
+      endDateCtrl.setValidators([Validators.required]);
+      dateCtrl.clearValidators();
+      startTimeCtrl.clearValidators();
+      endTimeCtrl.clearValidators();
+    }
+
+    dateCtrl.updateValueAndValidity({ emitEvent: false });
+    startDateCtrl.updateValueAndValidity({ emitEvent: false });
+    endDateCtrl.updateValueAndValidity({ emitEvent: false });
+    startTimeCtrl.updateValueAndValidity({ emitEvent: false });
+    endTimeCtrl.updateValueAndValidity({ emitEvent: false });
+    this.form.updateValueAndValidity({ emitEvent: false });
   }
 
   private timeValidator(): ValidatorFn {

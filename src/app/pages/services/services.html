@@ -17,6 +17,11 @@
     </div>
     <div class="card__divider"></div>
 
+    @if (serviceActionError()) {
+      <div class="services-action-error">{{ serviceActionError() }}</div>
+      <div class="card__divider"></div>
+    }
+
     <div style="overflow:auto;">
       <table class="table">
         <thead>
@@ -39,7 +44,10 @@
               </td>
               <td>
                 @if (canManageCatalog()) {
-                  <button type="button" class="btn" (click)="openEdit(s)" aria-label="Edit service {{ s.name }}">Edit</button>
+                  <div class="services-actions">
+                    <button type="button" class="btn" (click)="openEdit(s)" aria-label="Edit service {{ s.name }}">Edit</button>
+                    <button type="button" class="btn btn--danger" (click)="confirmDelete(s)" aria-label="Delete service {{ s.name }}">Delete</button>
+                  </div>
                 }
               </td>
             </tr>
@@ -73,6 +81,11 @@
         <div class="card__divider"></div>
       }
 
+      <div class="services-assignments__hint">
+        Inactive salon services are locked here and will be removed from every staff member automatically.
+      </div>
+      <div class="card__divider"></div>
+
       <div style="overflow:auto;">
         <table class="table">
           <thead>
@@ -87,22 +100,28 @@
           </thead>
           <tbody>
             @for (row of assignmentRows(); track row.service.id) {
-              <tr>
+              <tr [class.services-assignments__row--inactive]="!row.enabledBySalon">
                 <td>
                   <input
                     type="checkbox"
                     [checked]="row.assigned"
+                    [disabled]="!row.enabledBySalon"
                     (change)="toggleAssignment(row.service.id, $any($event.target).checked)"
                   />
                 </td>
-                <td><strong>{{ row.service.name }}</strong></td>
+                <td>
+                  <strong>{{ row.service.name }}</strong>
+                  @if (!row.enabledBySalon) {
+                    <div class="services-assignments__meta">Disabled at salon level</div>
+                  }
+                </td>
                 <td>{{ row.service.durationMin }} min</td>
                 <td>
                   <input
                     type="number"
                     class="input"
                     style="min-width:120px;"
-                    [disabled]="!row.assigned"
+                    [disabled]="!row.assigned || !row.enabledBySalon"
                     [value]="row.durationMin ?? ''"
                     (input)="updateDuration(row.service.id, $any($event.target).value)"
                     placeholder="Use default"
@@ -114,7 +133,7 @@
                     type="number"
                     class="input"
                     style="min-width:120px;"
-                    [disabled]="!row.assigned"
+                    [disabled]="!row.assigned || !row.enabledBySalon"
                     [value]="row.price ?? ''"
                     (input)="updatePrice(row.service.id, $any($event.target).value)"
                     placeholder="Use default"
@@ -142,4 +161,21 @@
     (save)="save($event)"
     (closed)="closeDialog()"
   />
+
+  @if (pendingDelete(); as item) {
+    <div class="services-confirm-backdrop" aria-hidden="true"></div>
+    <section class="services-confirm" role="alertdialog" aria-modal="true" aria-labelledby="service-delete-title">
+      <h3 id="service-delete-title">Delete service?</h3>
+      <p>
+        This will remove <strong>{{ item.name }}</strong> from the service catalog and from all staff assignments.
+        Existing appointments using it cannot be deleted.
+      </p>
+      <div class="services-confirm__actions">
+        <button type="button" class="btn" [disabled]="deletingService()" (click)="closeDeleteDialog()">Cancel</button>
+        <button type="button" class="btn btn--danger" [disabled]="deletingService()" (click)="deletePendingService()">
+          {{ deletingService() ? 'Deleting...' : 'Delete service' }}
+        </button>
+      </div>
+    </section>
+  }
 </div>

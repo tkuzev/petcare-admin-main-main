@@ -4,31 +4,37 @@
     <button type="button" class="pc-icon-btn" (click)="cancel()" aria-label="Close dialog">✕</button>
   </div>
 
-  <form class="pc-modal__body" (ngSubmit)="submit()">
+  <form class="pc-modal__body" [formGroup]="form" (ngSubmit)="submit()">
     <div class="pc-grid">
       <label class="pc-field">
         <span class="pc-label">Practitioner</span>
         <div class="pc-inputwrap pc-select-wrap">
-          <select class="pc-input" [formControl]="form.controls.staffId">
+          <select class="pc-input" formControlName="staffId" required [attr.aria-invalid]="isInvalid('staffId')">
             @for (member of availableStaff(); track member.id) {
               <option [value]="member.id">{{ member.name }}</option>
             }
           </select>
           <span class="pc-select-arrow" aria-hidden="true">⌄</span>
         </div>
+        @if (isInvalid('staffId')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
       <label class="pc-field">
         <span class="pc-label">Title</span>
         <div class="pc-inputwrap">
-          <input class="pc-input" type="text" [formControl]="form.controls.title" />
+          <input class="pc-input" type="text" formControlName="title" required [attr.aria-invalid]="isInvalid('title')" />
         </div>
+        @if (isInvalid('title')) {
+          <span class="pc-error" role="alert">Required</span>
+        }
       </label>
 
       <label class="pc-field">
         <span class="pc-label">Mode</span>
         <div class="pc-inputwrap pc-select-wrap">
-          <select class="pc-input" [formControl]="form.controls.mode">
+          <select class="pc-input" formControlName="mode">
             <option value="hours">Hours</option>
             <option value="days">Full days</option>
           </select>
@@ -40,8 +46,11 @@
         <label class="pc-field">
           <span class="pc-label">Date</span>
           <div class="pc-inputwrap">
-            <input class="pc-input" type="date" [formControl]="form.controls.date" />
+            <input class="pc-input" type="date" formControlName="date" required [attr.aria-invalid]="isInvalid('date')" />
           </div>
+          @if (isInvalid('date')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
         </label>
 
         <label class="pc-field">
@@ -53,11 +62,16 @@
               inputmode="numeric"
               maxlength="5"
               placeholder="--:--"
-              [formControl]="form.controls.startTime"
+              formControlName="startTime"
               (input)="onTimeInput('startTime', $event)"
               (blur)="formatTime('startTime')"
+              required
+              [attr.aria-invalid]="isInvalid('startTime')"
             />
           </div>
+          @if (isInvalid('startTime')) {
+            <span class="pc-error" role="alert">Use HH:MM</span>
+          }
         </label>
 
         <label class="pc-field">
@@ -69,25 +83,36 @@
               inputmode="numeric"
               maxlength="5"
               placeholder="--:--"
-              [formControl]="form.controls.endTime"
+              formControlName="endTime"
               (input)="onTimeInput('endTime', $event)"
               (blur)="formatTime('endTime')"
+              required
+              [attr.aria-invalid]="isInvalid('endTime')"
             />
           </div>
+          @if (isInvalid('endTime')) {
+            <span class="pc-error" role="alert">Use HH:MM</span>
+          }
         </label>
       } @else {
         <label class="pc-field">
           <span class="pc-label">Start date</span>
           <div class="pc-inputwrap">
-            <input class="pc-input" type="date" [formControl]="form.controls.startDate" />
+            <input class="pc-input" type="date" formControlName="startDate" required [attr.aria-invalid]="isInvalid('startDate')" />
           </div>
+          @if (isInvalid('startDate')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
         </label>
 
         <label class="pc-field">
           <span class="pc-label">End date</span>
           <div class="pc-inputwrap">
-            <input class="pc-input" type="date" [formControl]="form.controls.endDate" />
+            <input class="pc-input" type="date" formControlName="endDate" required [attr.aria-invalid]="isInvalid('endDate')" />
           </div>
+          @if (isInvalid('endDate')) {
+            <span class="pc-error" role="alert">Required</span>
+          }
         </label>
       }
 
@@ -106,7 +131,7 @@
       <label class="pc-field pc-field--full">
         <span class="pc-label">Notes</span>
         <div class="pc-inputwrap">
-          <textarea class="pc-input" rows="4" [formControl]="form.controls.notes"></textarea>
+          <textarea class="pc-input" rows="4" formControlName="notes"></textarea>
         </div>
       </label>
     </div>

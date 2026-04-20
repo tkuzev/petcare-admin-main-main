@@ -108,6 +108,29 @@
             @if (submitted() && form.hasError('timeOrder')) {
               <span class="pc-field__error">Working end time must be after start time.</span>
             }
+            @if (submitted() && form.hasError('outsideSalonSchedule')) {
+              <span class="pc-field__error">{{ scheduleValidationMessage() }}</span>
+            }
+          </div>
+
+          <div class="pc-field">
+            <span class="pc-field__label">Working days</span>
+            <div class="pc-days">
+              @for (day of weekDays; track day.value) {
+                <label class="pc-day" [class.pc-day--closed]="isSalonClosed(day.value)">
+                  <input
+                    type="checkbox"
+                    [disabled]="isSalonClosed(day.value)"
+                    [checked]="hasWorkingDay(day.value)"
+                    (change)="toggleWorkingDay(day.value, $any($event.target).checked)"
+                  />
+                  <span>{{ day.label }} · {{ salonHoursLabel(day.value) }}</span>
+                </label>
+              }
+            </div>
+            @if (submitted() && form.controls.workingDays.invalid) {
+              <span class="pc-field__error">Select at least one working day.</span>
+            }
           </div>
 
           <div class="pc-field">
@@ -143,5 +166,17 @@
       <button type="button" class="btn" (click)="close()">Cancel</button>
       <button type="submit" class="btn btn--primary">{{ isInviteMode() ? 'Send invite' : 'Save' }}</button>
     </footer>
+
+    @if (pendingScheduleConfirm()) {
+      <div class="pc-confirm-backdrop"></div>
+      <section class="pc-confirm" role="alertdialog" aria-modal="true">
+        <h3>Save working schedule?</h3>
+        <p>Are you sure you want to change this staff member's working days or hours?</p>
+        <div class="pc-confirm__actions">
+          <button type="button" class="btn" (click)="closeScheduleConfirm()">Back</button>
+          <button type="button" class="btn btn--primary" (click)="confirmScheduleSave()">Yes, save</button>
+        </div>
+      </section>
+    }
   </form>
 </dialog>

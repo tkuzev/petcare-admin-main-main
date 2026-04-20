@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
+import { WorkingDay, WorkingDaySchedule } from './company-schedule.service';
 
 export type StaffRole = 'Vet' | 'Groomer' | 'Reception' | 'Manager' | 'Admin';
 
@@ -18,6 +19,8 @@ export type StaffMember = {
   email?: string;
   workingStartTime?: string;
   workingEndTime?: string;
+  workingDays: WorkingDay[];
+  workingSchedule: WorkingDaySchedule[];
 };
 
 export type StaffUpsertPayload = Omit<StaffMember, 'id' | 'name' | 'roleLabel'>;
@@ -36,6 +39,12 @@ type StaffApiResponse = {
   active: boolean;
   workingStartTime?: string | null;
   workingEndTime?: string | null;
+  workingDays?: WorkingDay[] | null;
+  workingSchedule?: Array<{
+    day: WorkingDay;
+    startTime?: string | null;
+    endTime?: string | null;
+  }> | null;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -80,9 +89,15 @@ export class StaffService {
       lastName: (patch.lastName ?? member.lastName ?? '').trim(),
       phone: (patch.phone ?? member.phone ?? '').trim() || null,
       roles: this.mapRolesToApi(patch.roles ?? member.roles),
-      status: (patch.active ?? member.active) ? 'ACTIVE' : 'INACTIVE',
+      status: (patch.active ?? member.active) ? 'ACTIVE' : 'DISABLED',
       workingStartTime: this.normalizeApiTime(patch.workingStartTime ?? member.workingStartTime),
       workingEndTime: this.normalizeApiTime(patch.workingEndTime ?? member.workingEndTime),
+      workingDays: patch.workingDays?.length ? patch.workingDays : member.workingDays,
+      workingSchedule: (patch.workingSchedule?.length ? patch.workingSchedule : member.workingSchedule).map(item => ({
+        day: item.day,
+        startTime: this.normalizeApiTime(item.startTime),
+        endTime: this.normalizeApiTime(item.endTime),
+      })),
     };
 
     this.http.put<StaffApiResponse>(`/api/company/staff/${id}`, payload).subscribe({
@@ -128,6 +143,23 @@ export class StaffService {
     const middleName = item.middleName?.trim() || undefined;
     const lastName = item.lastName?.trim() || undefined;
 
+    const fallbackStart = this.normalizeDisplayTime(item.workingStartTime) ?? '09:00';
+    const fallbackEnd = this.normalizeDisplayTime(item.workingEndTime) ?? '17:00';
+    const fallbackDays = item.workingDays?.length
+      ? item.workingDays
+      : ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'] satisfies WorkingDay[];
+    const workingSchedule = item.workingSchedule?.length
+      ? item.workingSchedule.map(row => ({
+          day: row.day,
+          startTime: this.normalizeDisplayTime(row.startTime) ?? fallbackStart,
+          endTime: this.normalizeDisplayTime(row.endTime) ?? fallbackEnd,
+        }))
+      : fallbackDays.map(day => ({
+          day,
+          startTime: fallbackStart,
+          endTime: fallbackEnd,
+        }));
+
     return {
       id: item.id,
       userId: String(item.userId),
@@ -140,8 +172,10 @@ export class StaffService {
       roles,
       roleLabel: this.formatRoleLabel(roles),
       active: item.active,
-      workingStartTime: this.normalizeDisplayTime(item.workingStartTime),
-      workingEndTime: this.normalizeDisplayTime(item.workingEndTime),
+      workingStartTime: fallbackStart,
+      workingEndTime: fallbackEnd,
+      workingDays: workingSchedule.map(row => row.day),
+      workingSchedule,
     };
   }
 

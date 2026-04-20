@@ -245,6 +245,10 @@ export class Dashboard {
       hasBackdrop: true,
       disableClose: false,
       panelClass: 'pc-dialog-panel',
+      data: {
+        staffId: this.activeStaffId(),
+        blocks: this.blocks(),
+      },
     });
 
     ref.closed.subscribe(async result => {
@@ -258,8 +262,12 @@ export class Dashboard {
         this.loadAppointmentsForStaff(this.activeStaffId());
         this.loadBlocksForStaff(this.activeStaffId());
         this.loadDashboardData(this.activeStaffId());
-      } catch (error) {
-        this.blockFeedback.set('Could not save the block. Please check the selected time range.');
+      } catch (error: any) {
+        const message =
+          error?.error?.message && typeof error.error.message === 'string'
+            ? error.error.message
+            : 'Could not save the block. Please check the selected time range.';
+        this.blockFeedback.set(message);
         console.error('Failed to create calendar block', error);
       }
     });

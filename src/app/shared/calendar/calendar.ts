@@ -108,17 +108,21 @@ export class Calendar implements AfterViewInit {
 
     const blockEvents = this.blocks()
       .filter(a => (staffId ? a.staffId === staffId : true))
-      .map(a => ({
-        id: `block:${a.id}`,
-        title: a.title,
-        start: a.startIso,
-        end: a.endIso,
-        editable: false,
-        allDay: this.isFullDayBlock(a),
-        display: this.isFullDayBlock(a) ? 'background' : 'auto',
-        classNames: ['pc-event--blocked'],
-        extendedProps: { kind: 'block' },
-      }));
+      .map(a => {
+        const isFullDay = this.isFullDayBlock(a);
+
+        return {
+          id: `block:${a.id}`,
+          title: a.title,
+          start: a.startIso,
+          end: a.endIso,
+          editable: false,
+          allDay: isFullDay,
+          display: 'auto',
+          classNames: ['pc-event--blocked', ...(isFullDay ? ['pc-event--blocked-all-day'] : [])],
+          extendedProps: { kind: 'block' },
+        };
+      });
 
     return [...appointmentEvents, ...blockEvents];
   });
@@ -210,6 +214,10 @@ export class Calendar implements AfterViewInit {
   }
 
   private isFullDayBlock(block: CalendarBlock): boolean {
-    return block.startIso.endsWith('T00:00:00') && block.endIso.endsWith('T00:00:00');
+    return this.isMidnightTimestamp(block.startIso) && this.isMidnightTimestamp(block.endIso);
+  }
+
+  private isMidnightTimestamp(value: string): boolean {
+    return /T00:00(?::00(?:\.\d{1,9})?)?$/.test(value);
   }
 }

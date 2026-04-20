@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export type ServiceItem = {
   id: string;
@@ -44,36 +45,30 @@ export class ServicesService {
     });
   }
 
-  addService(payload: Omit<ServiceItem, 'id'>): void {
+  async addService(payload: Omit<ServiceItem, 'id'>): Promise<ServiceItem> {
     const request = this.toRequest(payload);
-
-    this.http.post<ServiceApiResponse>('/api/company/services', request).subscribe({
-      next: created => {
-        this._services.update(list => [this.mapFromApi(created), ...list]);
-      },
-      error: error => {
-        console.error('Failed to create service', error);
-      },
-    });
+    const created = await firstValueFrom(this.http.post<ServiceApiResponse>('/api/company/services', request));
+    const mapped = this.mapFromApi(created);
+    this._services.update(list => [mapped, ...list]);
+    return mapped;
   }
 
-  updateService(id: string, patch: Partial<Omit<ServiceItem, 'id'>>): void {
+  async updateService(id: string, patch: Partial<Omit<ServiceItem, 'id'>>): Promise<ServiceItem | null> {
     const current = this._services().find(item => item.id === id);
     if (!current) {
-      return;
+      return null;
     }
 
     const request = this.toRequest({ ...current, ...patch });
+    const updated = await firstValueFrom(this.http.put<ServiceApiResponse>(`/api/company/services/${id}`, request));
+    const mapped = this.mapFromApi(updated);
+    this._services.update(list => list.map(item => (item.id === id ? mapped : item)));
+    return mapped;
+  }
 
-    this.http.put<ServiceApiResponse>(`/api/company/services/${id}`, request).subscribe({
-      next: updated => {
-        const mapped = this.mapFromApi(updated);
-        this._services.update(list => list.map(item => (item.id === id ? mapped : item)));
-      },
-      error: error => {
-        console.error('Failed to update service', error);
-      },
-    });
+  async deleteService(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`/api/company/services/${id}`));
+    this._services.update(list => list.filter(item => item.id !== id));
   }
 
   private mapFromApi(item: ServiceApiResponse): ServiceItem {
